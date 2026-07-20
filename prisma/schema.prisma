@@ -1,0 +1,395 @@
+// =============================================================================
+// Camproxi Unified Prisma Schema — MongoDB
+// =============================================================================
+// Merged from: Admin Portal, Agent Portal, Student Portal
+// All models share a single MongoDB database (camproxi).
+// =============================================================================
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// =============================================================================
+// ADMIN PORTAL — Types & Models
+// =============================================================================
+
+type SchoolLocation {
+  longitude Float
+  latitude  Float
+}
+
+enum AdminRole {
+  OFFICIAL
+  ADMIN
+  SUPER_ADMIN
+}
+
+type Campus {
+  name     String
+  location SchoolLocation
+}
+
+model Admin {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  username  String    @unique
+  email     String    @unique
+  name      String?
+  password  String
+  role      AdminRole @default(OFFICIAL)
+  createdAt DateTime  @default(now())
+
+  @@map("admins")
+}
+
+model School {
+  id         String     @id @default(auto()) @map("_id") @db.ObjectId
+  name       String
+  code       String?
+  campus     Campus[]
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  agents     Agent[]
+  users      User[]
+  properties Property[]
+  products   Product[]
+  services   Service[]
+
+  @@map("schools")
+}
+
+// =============================================================================
+// AGENT PORTAL — Types & Models
+// =============================================================================
+
+enum AgentCategory {
+  AGENT
+  VENDOR
+  SERVICE_PROVIDER
+}
+
+type AgentProfileImage {
+  url      String
+  publicId String @map("public_id")
+}
+
+type SocialLinks {
+  facebook  String @default("")
+  twitter   String @default("")
+  instagram String @default("")
+}
+
+model Agent {
+  id           String             @id @default(auto()) @map("_id") @db.ObjectId
+  firstName    String
+  lastName     String
+  username     String             @unique
+  companyName  String
+  category     AgentCategory      @default(AGENT)
+  email        String             @unique
+  password     String
+  phone        String
+  whatsapp     String?
+  profileImage AgentProfileImage?
+  address      String?
+  bio          String             @default("")
+  socialLinks  SocialLinks?
+  schoolId     String             @db.ObjectId
+  school       School             @relation(fields: [schoolId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  properties Property[]
+  products   Product[]
+  services   Service[]
+
+  @@map("agents")
+}
+
+type Location {
+  lat Float
+  lng Float
+}
+
+type PropertyImage {
+  url      String
+  publicId String   @map("public_id")
+  isCover  Boolean?
+}
+
+model Property {
+  id           String          @id @default(auto()) @map("_id") @db.ObjectId
+  propertyId   String
+  name         String
+  address      String
+  roomType     String
+  amenities    String[]
+  description  String
+  price        Float
+  unitQuantity Int
+  location     Location
+  images       PropertyImage[]
+
+  agentId String @db.ObjectId
+  agent   Agent  @relation(fields: [agentId], references: [id])
+
+  isVacant  Boolean  @default(true)
+  status    String   @default("pending")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  school    School?  @relation(fields: [schoolId], references: [id])
+  schoolId  String?  @db.ObjectId
+
+  averageRating Float @default(0.0)
+  totalReviews  Int   @default(0)
+
+  @@map("properties")
+}
+
+enum DeliveryOption {
+  CAMPUS
+  PICKUP
+  HOME
+}
+
+type Delivery {
+  option   DeliveryOption? @default(HOME)
+  price    Float?
+  duration Int?
+}
+
+type ProductImage {
+  url      String
+  publicId String   @map("public_id")
+  isCover  Boolean?
+}
+
+model Product {
+  id               String         @id @default(auto()) @map("_id") @db.ObjectId
+  productId        String
+  name             String
+  businessCategory String
+  delivery         Delivery?
+  description      String
+  price            Float
+  images           ProductImage[]
+
+  agentId String @db.ObjectId
+  agent   Agent  @relation(fields: [agentId], references: [id])
+
+  isAvailable Boolean  @default(true)
+  status      String   @default("pending")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  school      School?  @relation(fields: [schoolId], references: [id])
+  schoolId    String?  @db.ObjectId
+
+  averageRating Float @default(0.0)
+  totalReviews  Int   @default(0)
+
+  @@map("products")
+}
+
+type TimeRange {
+  startTime String
+  endTime   String
+}
+
+type ServiceImage {
+  url      String
+  publicId String   @map("public_id")
+  isCover  Boolean?
+}
+
+model Service {
+  id              String         @id @default(auto()) @map("_id") @db.ObjectId
+  serviceId       String
+  name            String
+  address         String
+  serviceCategory String
+  availableDays   String[]
+  description     String
+  price           Float
+  perUnit         String
+  time            TimeRange
+  images          ServiceImage[]
+
+  agentId String @db.ObjectId
+  agent   Agent  @relation(fields: [agentId], references: [id])
+
+  isAvailable Boolean  @default(true)
+  status      String   @default("pending")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  school      School?  @relation(fields: [schoolId], references: [id])
+  schoolId    String?  @db.ObjectId
+
+  averageRating Float @default(0.0)
+  totalReviews  Int   @default(0)
+
+  @@map("services")
+}
+
+// =============================================================================
+// STUDENT PORTAL — Types & Models
+// =============================================================================
+
+type UserLocation {
+  longitude Float
+  latitude  Float
+}
+
+type UserProfileImage {
+  url       String
+  public_id String
+}
+
+model SavedItem {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  itemId       String
+  itemCategory String
+  savedAt      DateTime @default(now())
+  user         User?    @relation(fields: [userId], references: [id])
+  userId       String?  @db.ObjectId
+}
+
+model User {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  firstName     String
+  lastName      String
+  username      String   @unique
+  password      String
+  email         String   @unique
+  // phone         Int?     
+  emailVerified Boolean  @default(false)
+  phoneVerified Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  location UserLocation?
+
+  schoolId String @db.ObjectId
+  school   School @relation(fields: [schoolId], references: [id])
+
+  bio          String?
+  profileImage UserProfileImage?
+
+  saveditems SavedItem[]
+  reviews    Review[]
+  ratings    Rating[]
+  requests   Request[]
+
+  notificationsEnabled Boolean @default(true)
+
+  @@unique([id, email])
+  @@map("users")
+}
+
+// =============================================================================
+// GLOBAL — Notifications
+// =============================================================================
+
+enum RecipientType {
+  STUDENT
+  AGENT
+  ADMIN
+}
+
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
+}
+
+enum NotificationCat {
+  REVIEW_CREATED
+  REQUEST_UPDATED
+  REQUEST_CREATED
+}
+
+model Notification {
+  id            String           @id @default(auto()) @map("_id") @db.ObjectId
+  recipientId   String           @db.ObjectId
+  recipientType RecipientType
+  title         String
+  message       String
+  type          NotificationType @default(INFO)
+  isRead        Boolean          @default(false)
+  category      NotificationCat
+
+  link         String?
+  itemId       String? @db.ObjectId
+  itemCategory String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("notifications")
+}
+
+// =============================================================================
+// GLOBAL — Ratings & Reviews
+// =============================================================================
+
+model Rating {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  itemId       String   @db.ObjectId
+  itemCategory String // "PRODUCT", "PROPERTY", "SERVICE"
+  rating       Int // 1 to 5
+  studentId    String   @db.ObjectId
+  student      User     @relation(fields: [studentId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([studentId, itemId])
+  @@map("ratings")
+}
+
+model Review {
+  id           String @id @default(auto()) @map("_id") @db.ObjectId
+  itemId       String @db.ObjectId
+  itemCategory String // "PRODUCT", "PROPERTY", "SERVICE"
+  comment      String
+  studentId    String @db.ObjectId
+  student      User   @relation(fields: [studentId], references: [id])
+
+  agentReply     String?
+  agentRepliedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("reviews")
+}
+
+// =============================================================================
+// GLOBAL — Requests
+// =============================================================================
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Request {
+  id            String        @id @default(auto()) @map("_id") @db.ObjectId
+  itemId        String        @db.ObjectId
+  itemCategory  String // "PRODUCT", "PROPERTY", "SERVICE"
+  itemName      String
+  studentId     String        @db.ObjectId
+  student       User          @relation(fields: [studentId], references: [id])
+  message       String?
+  status        RequestStatus @default(PENDING)
+  agentResponse String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@map("requests")
+}
