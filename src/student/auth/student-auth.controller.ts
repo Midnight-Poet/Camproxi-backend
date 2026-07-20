@@ -67,7 +67,7 @@ export class StudentAuthController {
 		response.clearCookie('access_token', {
 			httpOnly: true,
 			secure: true,
-			sameSite: 'lax',
+			sameSite: 'none',
 			path: '/',
 		});
 		return { message: 'Logout successful' };
