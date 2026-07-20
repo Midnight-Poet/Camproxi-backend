@@ -65,6 +65,7 @@ export class UsersService {
         email: userDto.email,
         password: userDto.password,
         schoolId: userDto.schoolId,
+        campusName: userDto.campusName,
         location:
           userDto.longitude && userDto.latitude
             ? { longitude: userDto.longitude, latitude: userDto.latitude }

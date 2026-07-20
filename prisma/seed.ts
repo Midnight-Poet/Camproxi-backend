@@ -48,6 +48,7 @@ async function main() {
         password: defaultPassword,
         email: `student${i}@futminna.edu.ng`,
         schoolId: school.id,
+        campusName: 'Bosso Campus',
         bio: `I am a student at ${school.name}`,
       });
     }
@@ -59,23 +60,23 @@ async function main() {
 
   // AGENT Category (Real Estate)
   const agentsData = [
-    { firstName: 'Campus', lastName: 'Housing', username: 'campus_housing', companyName: 'Campus Housing Ltd', category: 'AGENT' as any, email: 'contact@campushousing.com', password: defaultPassword, phone: '08012345678', schoolId: futminna.id },
-    { firstName: 'Student', lastName: 'Shelters', username: 'student_shelters', companyName: 'Student Shelters', category: 'AGENT' as any, email: 'hello@studentshelters.com', password: defaultPassword, phone: '08023456789', schoolId: futminna.id },
-    { firstName: 'UniHomes', lastName: 'Prop', username: 'unihomes', companyName: 'UniHomes Properties', category: 'AGENT' as any, email: 'info@unihomes.com', password: defaultPassword, phone: '08034567890', schoolId: futminna.id },
+    { firstName: 'Campus', lastName: 'Housing', username: 'campus_housing', companyName: 'Campus Housing Ltd', category: 'AGENT' as any, email: 'contact@campushousing.com', password: defaultPassword, phone: '08012345678', schoolId: futminna.id, campusName: 'Bosso Campus' },
+    { firstName: 'Student', lastName: 'Shelters', username: 'student_shelters', companyName: 'Student Shelters', category: 'AGENT' as any, email: 'hello@studentshelters.com', password: defaultPassword, phone: '08023456789', schoolId: futminna.id, campusName: 'Gidan Kwano Campus' },
+    { firstName: 'UniHomes', lastName: 'Prop', username: 'unihomes', companyName: 'UniHomes Properties', category: 'AGENT' as any, email: 'info@unihomes.com', password: defaultPassword, phone: '08034567890', schoolId: futminna.id, campusName: 'Bosso Campus' },
   ];
 
   // VENDOR Category (Products)
   const vendorsData = [
-    { firstName: 'Gadget', lastName: 'Hub', username: 'gadget_hub', companyName: 'Gadget Hub', category: 'VENDOR' as any, email: 'sales@gadgethub.com', password: defaultPassword, phone: '08045678901', schoolId: futminna.id },
-    { firstName: 'Campus', lastName: 'Groceries', username: 'campus_groceries', companyName: 'Campus Groceries', category: 'VENDOR' as any, email: 'buy@campusgroceries.com', password: defaultPassword, phone: '08056789012', schoolId: futminna.id },
-    { firstName: 'BookWorms', lastName: 'Hub', username: 'bookworms_hub', companyName: 'BookWorms Hub', category: 'VENDOR' as any, email: 'books@bookworms.com', password: defaultPassword, phone: '08067890123', schoolId: futminna.id },
+    { firstName: 'Gadget', lastName: 'Hub', username: 'gadget_hub', companyName: 'Gadget Hub', category: 'VENDOR' as any, email: 'sales@gadgethub.com', password: defaultPassword, phone: '08045678901', schoolId: futminna.id, campusName: 'Gidan Kwano Campus' },
+    { firstName: 'Campus', lastName: 'Groceries', username: 'campus_groceries', companyName: 'Campus Groceries', category: 'VENDOR' as any, email: 'buy@campusgroceries.com', password: defaultPassword, phone: '08056789012', schoolId: futminna.id, campusName: 'Bosso Campus' },
+    { firstName: 'BookWorms', lastName: 'Hub', username: 'bookworms_hub', companyName: 'BookWorms Hub', category: 'VENDOR' as any, email: 'books@bookworms.com', password: defaultPassword, phone: '08067890123', schoolId: futminna.id, campusName: 'Gidan Kwano Campus' },
   ];
 
   // SERVICE_PROVIDER Category (Services)
   const serviceProvidersData = [
-    { firstName: 'Quick', lastName: 'Fix', username: 'quick_fix', companyName: 'Quick Fix Plumbers', category: 'SERVICE_PROVIDER' as any, email: 'plumber@quickfix.com', password: defaultPassword, phone: '08078901234', schoolId: futminna.id },
-    { firstName: 'Student', lastName: 'Laundry', username: 'student_laundry', companyName: 'Student Laundry Pro', category: 'SERVICE_PROVIDER' as any, email: 'clean@studentlaundry.com', password: defaultPassword, phone: '08089012345', schoolId: futminna.id },
-    { firstName: 'Campus', lastName: 'Tech', username: 'campus_tech', companyName: 'Campus Tech Repair', category: 'SERVICE_PROVIDER' as any, email: 'fix@campustech.com', password: defaultPassword, phone: '08090123456', schoolId: futminna.id },
+    { firstName: 'Quick', lastName: 'Fix', username: 'quick_fix', companyName: 'Quick Fix Plumbers', category: 'SERVICE_PROVIDER' as any, email: 'plumber@quickfix.com', password: defaultPassword, phone: '08078901234', schoolId: futminna.id, campusName: 'Bosso Campus' },
+    { firstName: 'Student', lastName: 'Laundry', username: 'student_laundry', companyName: 'Student Laundry Pro', category: 'SERVICE_PROVIDER' as any, email: 'clean@studentlaundry.com', password: defaultPassword, phone: '08089012345', schoolId: futminna.id, campusName: 'Bosso Campus' },
+    { firstName: 'Campus', lastName: 'Tech', username: 'campus_tech', companyName: 'Campus Tech Repair', category: 'SERVICE_PROVIDER' as any, email: 'fix@campustech.com', password: defaultPassword, phone: '08090123456', schoolId: futminna.id, campusName: 'Gidan Kwano Campus' },
   ];
 
   const createdAgents = [];

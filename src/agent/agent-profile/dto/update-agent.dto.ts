@@ -3,7 +3,7 @@ import { PartialType, OmitType } from '@nestjs/mapped-types';
 import { CreateAgentDto } from './create-agent.dto';
 
 export class UpdateAgentDto extends PartialType(
-  OmitType(CreateAgentDto, ['email', 'password', 'schoolId'] as const),
+  OmitType(CreateAgentDto, ['email', 'password', 'schoolId', 'campusName'] as const),
 ) {
   @IsOptional()
   @IsString()

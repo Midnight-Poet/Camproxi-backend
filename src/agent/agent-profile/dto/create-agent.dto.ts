@@ -44,4 +44,8 @@ export class CreateAgentDto {
   @IsPhoneNumber('NG')
   @IsOptional()
   whatsapp?: string;
+
+  @IsString()
+  @IsNotEmpty()
+  campusName!: string;
 }

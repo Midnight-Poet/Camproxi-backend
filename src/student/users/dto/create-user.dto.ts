@@ -54,4 +54,8 @@ export class CreateUserDto {
   @IsString()
   @IsNotEmpty()
   schoolId!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  campusName!: string;
 }
