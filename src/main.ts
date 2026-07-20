@@ -4,6 +4,7 @@ import { ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
+  console.log(process.env.AGENT_URL)
   const app = await NestFactory.create(AppModule);
 
   app.useGlobalPipes(
@@ -28,7 +29,6 @@ async function bootstrap() {
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   });
-  console.log(process.env.AGENT_URL)
   const PORT = process.env.PORT || 3000;
   await app.listen(PORT, '0.0.0.0');
   console.log(`🚀 Camproxi Unified API running on port: ${PORT}`);
