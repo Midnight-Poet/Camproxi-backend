@@ -20,8 +20,8 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { CloudinaryService } from '../../common/cloudinary/cloudinary.service';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { Role } from 'src/common/enum/enum';
-import { StudentAuthGuard } from 'src/student/auth/guards/student-auth.guard';
+import { Role } from '../../common/enum/enum';
+import { StudentAuthGuard } from '../../student/auth/guards/student-auth.guard';
 
 
 @Controller('api/agent/products')
