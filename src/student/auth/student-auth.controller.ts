@@ -50,8 +50,8 @@ export class StudentAuthController {
       const result = await this.authService.createUser(user);
 			response.cookie('access_token', result.token, {
 				httpOnly: true,
-				secure: process.env.ENV_MODE === 'PROD',
-				sameSite: 'lax',
+				secure: true,
+				sameSite: 'none',
 				maxAge: 1000 * 60 * 60,
 				path: '/',
 			});
@@ -66,7 +66,7 @@ export class StudentAuthController {
 	public async logout(@Res({ passthrough: true }) response: Response) {
 		response.clearCookie('access_token', {
 			httpOnly: true,
-			secure: process.env.ENV_MODE === 'PROD',
+			secure: true,
 			sameSite: 'lax',
 			path: '/',
 		});

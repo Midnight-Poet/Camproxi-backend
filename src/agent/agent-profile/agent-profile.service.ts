@@ -69,8 +69,8 @@ export class AgentProfileService {
 	logout(res: Response) {
 		res.clearCookie('jwt', {
 			httpOnly: true,
-			secure: process.env.ENV_MODE === 'PROD',
-			sameSite: 'lax',
+			secure: true,
+			sameSite: 'none',
 			path: '/',
 		});
 		return { message: 'Logged out successfully' };
