@@ -39,6 +39,7 @@ export class ServiceController {
 		@UploadedFiles() files: Express.Multer.File[],
 	) {
 		const agentId = req['agent'].id;
+		const schoolId = req['agent'].schoolId;
 		let uploadedImages = [];
 		let serviceId = this.serviceService.generateServiceId();
 		if (files && files.length > 0) {
@@ -52,6 +53,7 @@ export class ServiceController {
 			createServiceDto,
 			uploadedImages,
 			serviceId,
+			schoolId
 		);
 	}
 

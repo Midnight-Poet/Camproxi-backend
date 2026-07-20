@@ -26,7 +26,8 @@ export class ServiceService {
     agentId: string,
     createDto: CreateServiceDto,
     images: { url: string; public_id: string }[],
-    serviceId: string
+    serviceId: string,
+    schoolId: string
   ) {
     try {
       const availableDays = Array.isArray(createDto.availableDays)
@@ -63,6 +64,7 @@ export class ServiceService {
           time,
           images: formattedImages,
           agentId,
+          schoolId
         },
       });
     } catch (error: any) {

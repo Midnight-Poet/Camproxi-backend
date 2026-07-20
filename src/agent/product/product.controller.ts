@@ -41,6 +41,7 @@ export class ProductController {
 		@UploadedFiles() files: Express.Multer.File[],
 	) {
 		const agentId = req['agent'].id;
+		const schoolId = req['agent'].schoolId;
 		let uploadedImages = [];
 		let productId = this.productService.generateProductId();
 		if (files && files.length > 0) {
@@ -54,6 +55,7 @@ export class ProductController {
 			createProductDto,
 			uploadedImages,
 			productId,
+			schoolId
 		);
 	}
 

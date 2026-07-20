@@ -26,7 +26,8 @@ export class PropertyService {
     agentId: string,
     createDto: CreatePropertyDto,
     images: { url: string; public_id: string }[],
-    propertyId: string
+    propertyId: string,
+    schoolId: string
   ) {
     try {
       const amenities = Array.isArray(createDto.amenities)
@@ -57,6 +58,7 @@ export class PropertyService {
           location: createDto.location,
           images: formattedImages,
           agentId,
+          schoolId
         },
       });
     } catch (error: any) {

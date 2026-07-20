@@ -39,6 +39,7 @@ export class PropertyController {
 		@UploadedFiles() files: Express.Multer.File[],
 	) {
 		const agentId = req['agent'].id;
+		const schoolId = req['agent'].schoolId;
 		let uploadedImages = [];
 		let propertyId = this.propertyService.generatePropertyId()
 		if (files && files.length > 0) {
@@ -51,7 +52,8 @@ export class PropertyController {
 			agentId,
 			createPropertyDto,
 			uploadedImages,
-			propertyId
+			propertyId,
+			schoolId
 		);
 	}
 
