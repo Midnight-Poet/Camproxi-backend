@@ -149,7 +149,7 @@ export class AgentProfileService {
 		res.cookie('jwt', token, {
 			httpOnly: true,
 			secure: process.env.ENV_MODE === 'PROD',
-			sameSite: 'lax',
+			sameSite: 'none',
 			maxAge: 7 * 24 * 60 * 60 * 1000,
 			path: '/',
 		});
