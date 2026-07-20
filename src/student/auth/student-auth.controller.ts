@@ -29,7 +29,7 @@ export class StudentAuthController {
 			response.cookie('access_token', result.token, {
 				httpOnly: true,
 				secure: true,
-				sameSite: 'lax',
+				sameSite: 'none',
 				maxAge: 1000 * 60 * 60,
 				path: '/',
 			});
@@ -51,7 +51,7 @@ export class StudentAuthController {
 			response.cookie('access_token', result.token, {
 				httpOnly: true,
 				secure: true,
-				sameSite: 'lax',
+				sameSite: 'none',
 				maxAge: 1000 * 60 * 60,
 				path: '/',
 			});
