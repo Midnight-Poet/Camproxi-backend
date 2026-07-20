@@ -28,7 +28,7 @@ export class StudentAuthController {
 		try {
 			response.cookie('access_token', result.token, {
 				httpOnly: true,
-				secure: process.env.ENV_MODE === 'PROD',
+				secure: true,
 				sameSite: 'lax',
 				maxAge: 1000 * 60 * 60,
 				path: '/',
@@ -51,7 +51,7 @@ export class StudentAuthController {
 			response.cookie('access_token', result.token, {
 				httpOnly: true,
 				secure: true,
-				sameSite: 'none',
+				sameSite: 'lax',
 				maxAge: 1000 * 60 * 60,
 				path: '/',
 			});
