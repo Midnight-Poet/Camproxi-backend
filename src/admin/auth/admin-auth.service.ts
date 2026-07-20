@@ -51,27 +51,23 @@ export class AdminAuthService {
     }
   }
 
-  public async createUser(password: string, user: any) {
+  public async createUser(roleOrKey: string, user: any) {
     const allUsers = await this.adminsService.getAllAdmins();
     if (!allUsers || allUsers.length === 0) {
-      if (password === process.env.ADMIN_PASSWORD) {
-        try {
-          const newUser: any = await this.adminsService.addNewUser(user);
-          return newUser;
-        } catch (err) {
-          console.log(err);
-        }
-      } else {
-        throw new UnauthorizedException(
-          'You are not authorized to add a new Admin',
-        );
-      }
-    } else {
-      if (password === 'SUPER_ADMIN') {
+      if (roleOrKey === process.env.ADMIN_PASSWORD) {
         const newUser: any = await this.adminsService.addNewUser(user);
         return newUser;
       } else {
-        throw new UnauthorizedException('Unauthorized action');
+        throw new UnauthorizedException(
+          'Invalid bootstrap key. You are not authorized to add a new Admin.',
+        );
+      }
+    } else {
+      if (roleOrKey === 'SUPER_ADMIN') {
+        const newUser: any = await this.adminsService.addNewUser(user);
+        return newUser;
+      } else {
+        throw new UnauthorizedException('Unauthorized action: Only SUPER_ADMINs can create admins');
       }
     }
   }

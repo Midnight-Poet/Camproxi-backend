@@ -7,12 +7,14 @@ import {
   Res,
   Req,
   UseGuards,
+  UnauthorizedException,
+  BadRequestException
 } from '@nestjs/common';
 import { AdminAuthService } from './admin-auth.service';
 import { CreateAdminDto } from '../admins/dto/create-admin.dto';
 import { LoginDto } from './dto/login.dto';
 import type { Request, Response } from 'express';
-import { AdminAuthGuard } from './guards/admin-auth.guard';
+import { AdminCreateGuard } from './guards/admin-create.guard';
 
 @Controller('api/admin/auth')
 export class AdminAuthController {
@@ -43,27 +45,27 @@ export class AdminAuthController {
     }
   }
 
-  @UseGuards(AdminAuthGuard)
+  @UseGuards(AdminCreateGuard)
   @Post('/create')
   public async createUser(
-    @Body() data: { user: CreateAdminDto; reqPassword: { key: string } },
+    @Body() data: { user: CreateAdminDto; reqPassword?: { key: string } },
     @Req() req: Request,
   ) {
     try {
-      const role = req['admin']?.role;
-      let result: any;
-      if (data.reqPassword) {
-        result = await this.authService.createUser(
-          data.reqPassword.key,
-          data.user,
-        );
-      } else {
-        result = await this.authService.createUser(role, data.user);
+      // If the user has a valid JWT, req['admin'] will exist with their role.
+      // If req['admin'] doesn't exist, they bypassed the guard via bootstrap mode (0 admins in DB).
+      // We strictly use the JWT role if authenticated, otherwise we use their provided bootstrap key.
+      const roleOrKey = req['admin'] ? req['admin'].role : data.reqPassword?.key;
+
+      if (!roleOrKey) {
+        throw new UnauthorizedException('Missing authentication or bootstrap key');
       }
+
+      const result: any = await this.authService.createUser(roleOrKey, data.user);
       return result?.newUser || result;
-    } catch (err) {
+    } catch (err: any) {
       console.log(err);
-      throw new Error('error creating user');
+      throw new BadRequestException(err.message || 'Error creating user');
     }
   }
 }
