@@ -25,6 +25,7 @@ async function bootstrap() {
       process.env.STUDENT_URL || 'http://localhost:3001',
     ],
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   });
 
   const PORT = process.env.PORT || 3000;
