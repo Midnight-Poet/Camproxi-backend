@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { StudentChatController } from './student-chat.controller';
-import { ChatModule } from 'src/common/chat/chat.module';
+import { ChatModule } from '../../common/chat/chat.module';
 import { StudentAuthModule } from '../auth/student-auth.module';
 
 @Module({
