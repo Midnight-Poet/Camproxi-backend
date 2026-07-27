@@ -51,6 +51,7 @@ export class ProductController {
 				`upload/products/${agentId}/${productId}`,
 			);
 		}
+		console.log('didnt break')
 		return this.productService.create(
 			agentId,
 			createProductDto,
