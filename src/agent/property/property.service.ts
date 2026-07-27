@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadGatewayException,
 } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CloudinaryService } from '../../common/cloudinary/cloudinary.service';
@@ -64,7 +65,7 @@ export class PropertyService {
         },
       });
     } catch (error: any) {
-      throw new Error(`Failed to create property: ${error.message}`);
+      throw new BadGatewayException(`Failed to create property: ${error.message}`);
     }
   }
 
