@@ -65,7 +65,6 @@ export class PropertyService {
         },
       });
     } catch (error: any) {
-      console.log(error)
       throw new BadGatewayException(`Failed to create property: ${error.message}`);
     }
   }

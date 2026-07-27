@@ -5,8 +5,8 @@ import * as jwt from 'jsonwebtoken';
 export class AgentAuthService {
   private readonly jwtSecret = process.env.AGENT_JWT_TOKEN || 'supersecret';
 
-  generateToken(agentId: string, email: string, category: string, schoolId: string): string {
-    return jwt.sign({ agentId, email, category , schoolId}, this.jwtSecret, { expiresIn: '7d' });
+  generateToken(agentId: string, email: string, category: string, schoolId: string, campusName: string): string {
+    return jwt.sign({ agentId, email, category , schoolId, campusName}, this.jwtSecret, { expiresIn: '7d' });
   }
 
   verifyToken(token: string): any {

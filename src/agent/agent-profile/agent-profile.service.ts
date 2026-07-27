@@ -38,7 +38,8 @@ export class AgentProfileService {
 			agent.id,
 			agent.email,
 			agent.category,
-			agent.schoolId
+			agent.schoolId,
+			agent.campusName
 		);
 		this.setTokenCookie(res, token);
 		const { password: _, ...agentWithoutPassword } = agent;
@@ -58,7 +59,8 @@ export class AgentProfileService {
 			agent.id,
 			agent.email,
 			agent.category,
-			agent.schoolId
+			agent.schoolId,
+			agent.campusName
 		);
 		this.setTokenCookie(res, token);
 		const { password: _, ...agentWithoutPassword } = agent;
