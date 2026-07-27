@@ -36,6 +36,7 @@ export class ItemsService {
       const properties =  await this.prisma.property.findMany({
       where: { schoolId },
       orderBy: { createdAt: 'desc' },
+      return properties
     });
     } catch (error) {
       console.log(error )
