@@ -7,6 +7,7 @@ import { ItemsModule } from './items/items.module';
 import { StudentNotificationModule } from './notification/student-notification.module';
 import { StudentReviewsModule } from './reviews/student-reviews.module';
 import { StudentRequestsModule } from './requests/student-requests.module';
+import { StudentChatModule } from './chat/student-chat.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { StudentRequestsModule } from './requests/student-requests.module';
     StudentNotificationModule,
     StudentReviewsModule,
     StudentRequestsModule,
+    StudentChatModule,
   ]
 })
 export class StudentModule {}

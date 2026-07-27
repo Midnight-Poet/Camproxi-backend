@@ -10,6 +10,7 @@ import {
   UseInterceptors,
   UploadedFile,
   Delete,
+  Param,
 } from '@nestjs/common';
 import { AgentProfileService } from './agent-profile.service';
 import { CreateAgentDto } from './dto/create-agent.dto';
@@ -63,6 +64,12 @@ export class AgentProfileController {
   @Get('me')
   getMe(@Req() req: Request) {
     return this.agentProfileService.getAgentProfile(req['agent'].id);
+  }
+
+  @UseGuards(AgentAuthGuard)
+  @Get('student/:id')
+  getStudentProfile(@Param('id') id: string) {
+    return this.agentProfileService.getStudentProfile(id);
   }
 
   @UseGuards(AgentAuthGuard)

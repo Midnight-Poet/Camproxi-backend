@@ -7,6 +7,7 @@ import { ServiceModule } from './service/service.module';
 import { AgentNotificationModule } from './notification/agent-notification.module';
 import { AgentReviewsModule } from './reviews/agent-reviews.module';
 import { AgentRequestsModule } from './requests/agent-requests.module';
+import { AgentChatModule } from './chat/agent-chat.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { AgentRequestsModule } from './requests/agent-requests.module';
     AgentNotificationModule,
     AgentReviewsModule,
     AgentRequestsModule,
+    AgentChatModule,
   ],
 })
 export class AgentModule {}

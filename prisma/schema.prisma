@@ -28,7 +28,10 @@ enum AdminRole {
   ADMIN
   SUPER_ADMIN
 }
-
+enum VerificationStatus {
+  UNVERIFIED
+  VERIFIED
+}
 type Campus {
   name     String
   location SchoolLocation
@@ -101,6 +104,7 @@ model Agent {
   schoolId     String             @db.ObjectId
   school       School             @relation(fields: [schoolId], references: [id])
   campusName   String
+  isverified  Boolean     @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -108,6 +112,7 @@ model Agent {
   properties Property[]
   products   Product[]
   services   Service[]
+  chats      Chat[]
 
   @@map("agents")
 }
@@ -136,6 +141,7 @@ model Property {
   location     Location
   images       PropertyImage[]
 
+  campus  String
   agentId String @db.ObjectId
   agent   Agent  @relation(fields: [agentId], references: [id])
 
@@ -180,6 +186,7 @@ model Product {
   price            Float
   images           ProductImage[]
 
+  campus  String
   agentId String @db.ObjectId
   agent   Agent  @relation(fields: [agentId], references: [id])
 
@@ -219,6 +226,7 @@ model Service {
   perUnit         String
   time            TimeRange
   images          ServiceImage[]
+  campus          String
 
   agentId String @db.ObjectId
   agent   Agent  @relation(fields: [agentId], references: [id])
@@ -267,6 +275,7 @@ model User {
   password      String
   email         String   @unique
   // phone         Int?     
+  isverified  Boolean     @default(false)
   emailVerified Boolean  @default(false)
   phoneVerified Boolean  @default(false)
   createdAt     DateTime @default(now())
@@ -285,6 +294,7 @@ model User {
   reviews    Review[]
   ratings    Rating[]
   requests   Request[]
+  chats      Chat[]
 
   notificationsEnabled Boolean @default(true)
 
@@ -313,6 +323,7 @@ enum NotificationCat {
   REVIEW_CREATED
   REQUEST_UPDATED
   REQUEST_CREATED
+  NEW_MESSAGE
 }
 
 model Notification {
@@ -394,4 +405,43 @@ model Request {
   updatedAt     DateTime      @updatedAt
 
   @@map("requests")
+}
+
+// =============================================================================
+// GLOBAL — Chat System
+// =============================================================================
+
+model Chat {
+  id           String  @id @default(auto()) @map("_id") @db.ObjectId
+  studentId    String  @db.ObjectId
+  student      User    @relation(fields: [studentId], references: [id])
+  agentId      String  @db.ObjectId
+  agent        Agent   @relation(fields: [agentId], references: [id])
+  itemId       String? @db.ObjectId // Optional reference to what they are discussing
+  itemCategory String? // "PRODUCT", "PROPERTY", "SERVICE"
+
+  messages  Message[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([studentId, agentId, itemId])
+  @@map("chats")
+}
+
+enum SenderType {
+  STUDENT
+  AGENT
+}
+
+model Message {
+  id         String     @id @default(auto()) @map("_id") @db.ObjectId
+  chatId     String     @db.ObjectId
+  chat       Chat       @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  senderId   String     @db.ObjectId
+  senderType SenderType
+  content    String
+  isRead     Boolean    @default(false)
+  createdAt  DateTime   @default(now())
+
+  @@map("messages")
 }

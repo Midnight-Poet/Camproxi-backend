@@ -40,6 +40,7 @@ export class PropertyController {
 	) {
 		const agentId = req['agent'].id;
 		const schoolId = req['agent'].schoolId;
+		const campus = req['agent'].campusName;
 		let uploadedImages = [];
 		let propertyId = this.propertyService.generatePropertyId()
 		if (files && files.length > 0) {
@@ -53,7 +54,8 @@ export class PropertyController {
 			createPropertyDto,
 			uploadedImages,
 			propertyId,
-			schoolId
+			schoolId,
+			campus
 		);
 	}
 

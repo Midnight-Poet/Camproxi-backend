@@ -28,7 +28,8 @@ export class ProductService {
 		createDto: CreateProductDto,
 		images: { url: string; public_id: string }[],
 		productId: string,
-		schoolId: string
+		schoolId: string,
+		campus: string
 	) {
 		try {
 			let delivery = createDto.delivery;
@@ -58,7 +59,8 @@ export class ProductService {
 					delivery,
 					images: formattedImages,
 					agentId,
-					schoolId
+					schoolId,
+					campus
 				},
 			});
 		} catch (error: any) {

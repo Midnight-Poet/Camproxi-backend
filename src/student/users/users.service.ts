@@ -28,6 +28,32 @@ export class UsersService {
     return user;
   }
 
+  public async getAgentById(id: string) {
+    const agent = await this.prisma.agent.findFirst({
+      where: { id },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        companyName: true,
+        email: true,
+        phone: true,
+        bio: true,
+        profileImage: true,
+        category: true,
+        campusName: true,
+        isverified: true,
+        school: {
+          select: { id: true, name: true, code: true, campus: true }
+        }
+      }
+    });
+    if (!agent) {
+      throw new NotFoundException('Agent not found');
+    }
+    return agent;
+  }
+
   public async getUserByEmail(email: string) {
     let user: any = null;
     try {

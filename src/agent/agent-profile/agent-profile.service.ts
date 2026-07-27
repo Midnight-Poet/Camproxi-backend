@@ -89,6 +89,28 @@ export class AgentProfileService {
 		return agentWithoutPassword;
 	}
 
+	async getStudentProfile(studentId: string) {
+		const student = await this.prisma.user.findFirst({
+			where: { id: studentId },
+			select: {
+				id: true,
+				firstName: true,
+				lastName: true,
+				username: true,
+				email: true,
+				bio: true,
+				profileImage: true,
+				campusName: true,
+				isverified: true,
+				school: {
+					select: { id: true, name: true, code: true, campus: true }
+				}
+			}
+		});
+		if (!student) throw new NotFoundException('Student not found');
+		return student;
+	}
+
 	async updateProfile(
 		agentId: string,
 		updateAgentDto: UpdateAgentDto,

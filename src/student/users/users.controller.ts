@@ -34,6 +34,11 @@ export class UsersController {
     return this.usersService.getUserById(userId);
   }
 
+  @Get('agent/:id')
+  async getAgentById(@Param('id') id: string) {
+    return this.usersService.getAgentById(id);
+  }
+
   @Get(':id')
   async getUserById(@Param('id') id: string) {
     const user = await this.usersService.getUserById(id);

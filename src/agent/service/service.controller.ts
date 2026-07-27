@@ -40,6 +40,7 @@ export class ServiceController {
 	) {
 		const agentId = req['agent'].id;
 		const schoolId = req['agent'].schoolId;
+		const campus = req['agent'].campusName;
 		let uploadedImages = [];
 		let serviceId = this.serviceService.generateServiceId();
 		if (files && files.length > 0) {
@@ -53,7 +54,8 @@ export class ServiceController {
 			createServiceDto,
 			uploadedImages,
 			serviceId,
-			schoolId
+			schoolId,
+			campus
 		);
 	}
 

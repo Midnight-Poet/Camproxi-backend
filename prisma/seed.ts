@@ -10,6 +10,8 @@ async function main() {
   // 1. Wipe existing data
   console.log('Wiping database...');
   await prisma.notification.deleteMany({});
+  await prisma.message.deleteMany({});
+  await prisma.chat.deleteMany({});
   await prisma.request.deleteMany({});
   await prisma.review.deleteMany({});
   await prisma.rating.deleteMany({});
@@ -39,17 +41,31 @@ async function main() {
   // 3. Create Users (10 per school)
   console.log('Creating users...');
   for (const school of schools) {
+    const studentProfiles = [
+      { firstName: 'Aisha', lastName: 'Bello', username: 'aisha_b' },
+      { firstName: 'Chinedu', lastName: 'Okafor', username: 'chinedu_ok' },
+      { firstName: 'Folake', lastName: 'Adeyemi', username: 'folake_ade' },
+      { firstName: 'Ibrahim', lastName: 'Musa', username: 'ibrahim_m' },
+      { firstName: 'Ngozi', lastName: 'Eze', username: 'ngozi_eze' },
+      { firstName: 'Oluwaseun', lastName: 'Ogunleye', username: 'seun_ogun' },
+      { firstName: 'Zainab', lastName: 'Aliyu', username: 'zainab_ali' },
+      { firstName: 'Emeka', lastName: 'Nwachukwu', username: 'emeka_nw' },
+      { firstName: 'Fatima', lastName: 'Umar', username: 'fatima_u' },
+      { firstName: 'Adebowale', lastName: 'Johnson', username: 'ade_johnson' }
+    ];
+
     const users = [];
-    for (let i = 1; i <= 10; i++) {
+    for (let i = 0; i < 10; i++) {
+      const profile = studentProfiles[i];
       users.push({
-        firstName: `Student${i}`,
-        lastName: school.code || school.name.split(' ')[0],
-        username: `student${i}_${school.id.substring(school.id.length - 4)}`,
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        username: profile.username,
         password: defaultPassword,
-        email: `student${i}@futminna.edu.ng`,
+        email: `${profile.username}@futminna.edu.ng`,
         schoolId: school.id,
-        campusName: 'Bosso Campus',
-        bio: `I am a student at ${school.name}`,
+        campusName: i % 2 === 0 ? 'Bosso Campus' : 'Gidan Kwano Campus',
+        bio: `I am a student at ${school.name} studying hard and looking for great deals!`,
       });
     }
     await prisma.user.createMany({ data: users });
@@ -91,6 +107,14 @@ async function main() {
     const items = [];
     if (agent.category === 'AGENT') {
       for (let i = 1; i <= 10; i++) {
+        const images = [];
+        for (let j = 0; j < 5; j++) {
+          images.push({
+            url: `https://picsum.photos/seed/prop-${agent.id}-${i}-${j}/800/600`,
+            publicId: `prop-${agent.id}-${i}-${j}`,
+            isCover: j === 0
+          });
+        }
         items.push({
           propertyId: `PROP-${agent.id.substring(agent.id.length - 4)}-${i}`,
           name: `Property ${i} by ${agent.companyName}`,
@@ -103,13 +127,24 @@ async function main() {
           location: { lat: 6.5, lng: 3.3 },
           agentId: agent.id,
           schoolId: agent.schoolId,
+          campus: agent.campusName,
           isVacant: true,
-          status: 'available'
+          status: 'available',
+          images
         });
       }
       await prisma.property.createMany({ data: items });
     } else if (agent.category === 'VENDOR') {
       for (let i = 1; i <= 10; i++) {
+        const imageCount = Math.floor(Math.random() * 5) + 1;
+        const images = [];
+        for (let j = 0; j < imageCount; j++) {
+          images.push({
+            url: `https://picsum.photos/seed/prod-${agent.id}-${i}-${j}/800/600`,
+            publicId: `prod-${agent.id}-${i}-${j}`,
+            isCover: j === 0
+          });
+        }
         items.push({
           productId: `PROD-${agent.id.substring(agent.id.length - 4)}-${i}`,
           name: `Product ${i} by ${agent.companyName}`,
@@ -118,14 +153,25 @@ async function main() {
           price: 5000 + (i * 1000),
           agentId: agent.id,
           schoolId: agent.schoolId,
+          campus: agent.campusName,
           isAvailable: true,
           status: 'available',
-          delivery: { option: 'CAMPUS', price: 500, duration: 1 }
+          delivery: { option: 'CAMPUS', price: 500, duration: 1 },
+          images
         });
       }
       await prisma.product.createMany({ data: items });
     } else if (agent.category === 'SERVICE_PROVIDER') {
       for (let i = 1; i <= 10; i++) {
+        const imageCount = Math.floor(Math.random() * 5) + 1;
+        const images = [];
+        for (let j = 0; j < imageCount; j++) {
+          images.push({
+            url: `https://picsum.photos/seed/srv-${agent.id}-${i}-${j}/800/600`,
+            publicId: `srv-${agent.id}-${i}-${j}`,
+            isCover: j === 0
+          });
+        }
         items.push({
           serviceId: `SRV-${agent.id.substring(agent.id.length - 4)}-${i}`,
           name: `Service ${i} by ${agent.companyName}`,
@@ -138,8 +184,10 @@ async function main() {
           time: { startTime: '09:00', endTime: '17:00' },
           agentId: agent.id,
           schoolId: agent.schoolId,
+          campus: agent.campusName,
           isAvailable: true,
-          status: 'available'
+          status: 'available',
+          images
         });
       }
       await prisma.service.createMany({ data: items });
