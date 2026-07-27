@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AgentChatController } from './agent-chat.controller';
-import { ChatModule } from 'src/common/chat/chat.module';
+import { ChatModule } from '../../common/chat/chat.module';
 import { AgentAuthModule } from '../auth/agent-auth.module';
 
 @Module({
