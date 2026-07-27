@@ -32,10 +32,15 @@ export class ItemsService {
   }
 
   async getProperties(schoolId: string) {
-    return this.prisma.property.findMany({
+    try {
+      const properties =  await this.prisma.property.findMany({
       where: { schoolId },
       orderBy: { createdAt: 'desc' },
     });
+    } catch (error) {
+      console.log(error )
+    }
+    
   }
 
   async getPropertyById(id: string, schoolId: string) {
