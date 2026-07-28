@@ -22,6 +22,7 @@ export class StudentChatController {
     @Req() req: any, 
     @Body() body: { agentId: string, itemId?: string, itemCategory?: string }
   ) {
+    // console.log(body)
     return this.chatService.getOrCreateChat({
       studentId: req.user.sub,
       agentId: body.agentId,
