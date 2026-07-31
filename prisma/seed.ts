@@ -101,11 +101,22 @@ async function main() {
     createdAgents.push(created);
   }
 
+  // Helper to generate a random coordinate near a base coordinate
+  function getRandomLocationNear(baseLat: number, baseLng: number, maxOffset = 0.02) {
+    const latOffset = (Math.random() - 0.5) * maxOffset;
+    const lngOffset = (Math.random() - 0.5) * maxOffset;
+    return { lat: baseLat + latOffset, lng: baseLng + lngOffset };
+  }
+
   // 5. Create Items for Agents (10 each)
   console.log('Creating items for agents...');
   for (const agent of createdAgents) {
     const items = [];
     if (agent.category === 'AGENT') {
+      const campus = futminna.campus.find(c => c.name === agent.campusName);
+      const baseLat = campus ? campus.location.latitude : 9.6538;
+      const baseLng = campus ? campus.location.longitude : 6.5259;
+
       for (let i = 1; i <= 10; i++) {
         const images = [];
         for (let j = 0; j < 5; j++) {
@@ -124,7 +135,7 @@ async function main() {
           description: `A lovely property for students.`,
           price: 150000 + (i * 10000),
           unitQuantity: i % 3 === 0 ? 1 : 2,
-          location: { lat: 6.5, lng: 3.3 },
+          location: getRandomLocationNear(baseLat, baseLng, 0.02),
           agentId: agent.id,
           schoolId: agent.schoolId,
           campus: agent.campusName,

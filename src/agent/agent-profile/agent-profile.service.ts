@@ -13,6 +13,10 @@ import { UpdateAgentDto } from './dto/update-agent.dto';
 import * as bcrypt from 'bcrypt';
 import { Response } from 'express';
 import { CloudinaryService } from 'src/common/cloudinary/cloudinary.service';
+import { MailService } from 'src/common/mail/mail.service';
+import { SmsService } from 'src/common/sms/sms.service';
+import { NotificationService } from 'src/common/notification/notification.service';
+import { RecipientType, NotificationType, NotificationCat } from '@prisma/client';
 
 @Injectable()
 export class AgentProfileService {
@@ -20,6 +24,9 @@ export class AgentProfileService {
 		private readonly prisma: PrismaService,
 		private readonly authService: AgentAuthService,
 		private readonly cloudinary: CloudinaryService,
+		private readonly mailService: MailService,
+		private readonly smsService: SmsService,
+		private readonly notificationService: NotificationService,
 	) {}
 
 	async register(createAgentDto: CreateAgentDto, res: Response) {
@@ -31,9 +38,11 @@ export class AgentProfileService {
 			throw new ConflictException('Email or username already exists');
 		}
 		const hashedPassword = await bcrypt.hash(password, 10);
+
 		const agent = await this.prisma.agent.create({
 			data: { email, username, password: hashedPassword, ...rest },
 		});
+
 		const token = this.authService.generateToken(
 			agent.id,
 			agent.email,
@@ -78,6 +87,113 @@ export class AgentProfileService {
 			path: '/',
 		});
 		return { message: 'Logged out successfully' };
+	}
+
+	async verifyEmail(agentId: string, otp: string) {
+		const agent = await this.prisma.agent.findUnique({ where: { id: agentId } });
+		if (!agent) throw new NotFoundException('Agent not found');
+		if (agent.emailVerified) return { message: 'Email already verified' };
+		if (agent.emailOtp !== otp) throw new UnauthorizedException('Invalid OTP');
+		if (agent.emailOtpExpiry && agent.emailOtpExpiry < new Date()) {
+			throw new UnauthorizedException('OTP has expired');
+		}
+
+		const isNowFullyVerified = agent.phoneVerified;
+
+		await this.prisma.agent.update({
+			where: { id: agent.id },
+			data: { 
+				emailVerified: true, 
+				isverified: isNowFullyVerified,
+				emailOtp: null, 
+				emailOtpExpiry: null 
+			},
+		});
+
+		if (isNowFullyVerified && !agent.isverified) {
+			await this.notificationService.createNotification({
+				recipientId: agent.id,
+				recipientType: RecipientType.AGENT,
+				title: 'Account Verified!',
+				message: 'Your account has been successfully verified. You can now start listing your properties or products!',
+				type: NotificationType.SUCCESS,
+				category: NotificationCat.ACCOUNT_VERIFIED,
+			});
+		}
+
+		return { message: 'Email verified successfully', isFullyVerified: isNowFullyVerified };
+	}
+
+	async sendVerificationOtp(agentId: string) {
+		const agent = await this.prisma.agent.findUnique({ where: { id: agentId } });
+		if (!agent) throw new NotFoundException('Agent not found');
+		if (agent.emailVerified) return { message: 'Email already verified' };
+
+		const otp = Math.floor(100000 + Math.random() * 900000).toString();
+		const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
+
+		await this.prisma.agent.update({
+			where: { id: agent.id },
+			data: { emailOtp: otp, emailOtpExpiry: otpExpiry },
+		});
+
+		this.mailService.sendOtpEmail(agent.email, otp, agent.firstName).catch(console.error);
+
+		return { message: 'OTP sent to email successfully' };
+	}
+
+	async verifyPhone(agentId: string, otp: string) {
+		const agent = await this.prisma.agent.findUnique({ where: { id: agentId } });
+		if (!agent) throw new NotFoundException('Agent not found');
+		if (agent.phoneVerified) return { message: 'Phone already verified' };
+		if (agent.phoneOtp !== otp) throw new UnauthorizedException('Invalid OTP');
+		if (agent.phoneOtpExpiry && agent.phoneOtpExpiry < new Date()) {
+			throw new UnauthorizedException('OTP has expired');
+		}
+
+		const isNowFullyVerified = agent.emailVerified;
+
+		await this.prisma.agent.update({
+			where: { id: agent.id },
+			data: { 
+				phoneVerified: true, 
+				isverified: isNowFullyVerified,
+				phoneOtp: null, 
+				phoneOtpExpiry: null 
+			},
+		});
+
+		if (isNowFullyVerified && !agent.isverified) {
+			await this.notificationService.createNotification({
+				recipientId: agent.id,
+				recipientType: RecipientType.AGENT,
+				title: 'Account Verified!',
+				message: 'Your account has been successfully verified. You can now start listing your properties or products!',
+				type: NotificationType.SUCCESS,
+				category: NotificationCat.ACCOUNT_VERIFIED,
+			});
+		}
+
+		return { message: 'Phone verified successfully', isFullyVerified: isNowFullyVerified };
+	}
+
+	async sendPhoneVerificationOtp(agentId: string) {
+		const agent = await this.prisma.agent.findUnique({ where: { id: agentId } });
+		if (!agent) throw new NotFoundException('Agent not found');
+		if (agent.phoneVerified) return { message: 'Phone already verified' };
+		if (!agent.phone) throw new UnauthorizedException('No phone number attached to account');
+
+		const otp = Math.floor(100000 + Math.random() * 900000).toString();
+		const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
+
+		await this.prisma.agent.update({
+			where: { id: agent.id },
+			data: { phoneOtp: otp, phoneOtpExpiry: otpExpiry },
+		});
+
+		this.smsService.sendOtpSms(agent.phone, otp).catch(console.error);
+
+		return { message: 'OTP sent to phone successfully' };
 	}
 
 	async getAgentProfile(agentId: string) {
@@ -176,7 +292,7 @@ export class AgentProfileService {
 			httpOnly: true,
 			secure: true,
 			sameSite: 'none',
-			maxAge: 7 * 24 * 60 * 60 * 1000,
+			maxAge: 2 * 24 * 60 * 60 * 1000,
 			path: '/',
 		});
 	}

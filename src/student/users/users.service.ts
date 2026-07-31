@@ -90,6 +90,7 @@ export class UsersService {
         username: userDto.username,
         email: userDto.email,
         password: userDto.password,
+        phone: userDto.phone,
         schoolId: userDto.schoolId,
         campusName: userDto.campusName,
         location:

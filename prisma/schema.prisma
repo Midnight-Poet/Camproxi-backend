@@ -28,10 +28,12 @@ enum AdminRole {
   ADMIN
   SUPER_ADMIN
 }
+
 enum VerificationStatus {
   UNVERIFIED
   VERIFIED
 }
+
 type Campus {
   name     String
   location SchoolLocation
@@ -87,24 +89,30 @@ type SocialLinks {
 }
 
 model Agent {
-  id           String             @id @default(auto()) @map("_id") @db.ObjectId
-  firstName    String
-  lastName     String
-  username     String             @unique
-  companyName  String
-  category     AgentCategory      @default(AGENT)
-  email        String             @unique
-  password     String
-  phone        String
-  whatsapp     String?
-  profileImage AgentProfileImage?
-  address      String?
-  bio          String             @default("")
-  socialLinks  SocialLinks?
-  schoolId     String             @db.ObjectId
-  school       School             @relation(fields: [schoolId], references: [id])
-  campusName   String
-  isverified  Boolean     @default(false)
+  id             String             @id @default(auto()) @map("_id") @db.ObjectId
+  firstName      String
+  lastName       String
+  username       String             @unique
+  companyName    String
+  category       AgentCategory      @default(AGENT)
+  email          String             @unique
+  password       String
+  phone          String
+  whatsapp       String?
+  profileImage   AgentProfileImage?
+  address        String?
+  bio            String             @default("")
+  socialLinks    SocialLinks?
+  schoolId       String             @db.ObjectId
+  school         School             @relation(fields: [schoolId], references: [id])
+  campusName     String
+  isverified     Boolean            @default(false)
+  emailVerified  Boolean            @default(false)
+  phoneVerified  Boolean            @default(false)
+  emailOtp       String?
+  emailOtpExpiry DateTime?
+  phoneOtp       String?
+  phoneOtpExpiry DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -268,18 +276,22 @@ model SavedItem {
 }
 
 model User {
-  id            String   @id @default(auto()) @map("_id") @db.ObjectId
-  firstName     String
-  lastName      String
-  username      String   @unique
-  password      String
-  email         String   @unique
-  // phone         Int?     
-  isverified  Boolean     @default(false)
-  emailVerified Boolean  @default(false)
-  phoneVerified Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  firstName      String
+  lastName       String
+  username       String    @unique
+  password       String
+  email          String    @unique
+  phone          String?   @unique
+  isverified     Boolean   @default(false)
+  emailVerified  Boolean   @default(false)
+  phoneVerified  Boolean   @default(false)
+  emailOtp       String?
+  emailOtpExpiry DateTime?
+  phoneOtp       String?
+  phoneOtpExpiry DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   location UserLocation?
 
@@ -324,6 +336,7 @@ enum NotificationCat {
   REQUEST_UPDATED
   REQUEST_CREATED
   NEW_MESSAGE
+  ACCOUNT_VERIFIED
 }
 
 model Notification {

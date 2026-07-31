@@ -11,6 +11,7 @@ import {
   UploadedFile,
   Delete,
   Param,
+  BadRequestException,
 } from '@nestjs/common';
 import { AgentProfileService } from './agent-profile.service';
 import { CreateAgentDto } from './dto/create-agent.dto';
@@ -42,6 +43,39 @@ export class AgentProfileController {
     @Res({ passthrough: true }) res: Response,
   ) {
     return this.agentProfileService.login(loginAgentDto, res);
+  }
+
+  @UseGuards(AgentAuthGuard)
+  @Post('send-verification')
+  async sendVerification(@Req() req: Request) {
+    const agentId = req['agent']?.id;
+    return this.agentProfileService.sendVerificationOtp(agentId);
+  }
+
+  @UseGuards(AgentAuthGuard)
+  @Post('verify-email')
+  async verifyEmail(@Req() req: Request, @Body() body: { otp: string }) {
+    const agentId = req['agent']?.id;
+    if (!body.otp) {
+      throw new BadRequestException('OTP is required');
+    }
+    return this.agentProfileService.verifyEmail(agentId, body.otp);
+  }
+  @UseGuards(AgentAuthGuard)
+  @Post('send-phone-verification')
+  async sendPhoneVerification(@Req() req: Request) {
+    const agentId = req['agent']?.id;
+    return this.agentProfileService.sendPhoneVerificationOtp(agentId);
+  }
+
+  @UseGuards(AgentAuthGuard)
+  @Post('verify-phone')
+  async verifyPhone(@Req() req: Request, @Body() body: { otp: string }) {
+    const agentId = req['agent']?.id;
+    if (!body.otp) {
+      throw new BadRequestException('OTP is required');
+    }
+    return this.agentProfileService.verifyPhone(agentId, body.otp);
   }
 
   @Post('logout')

@@ -33,7 +33,7 @@ export class AdminAuthService {
         { sub: userDetail.id, email: userDetail.email, role: userDetail.role },
         {
           secret: this.authConfiguration.secret,
-          expiresIn: this.authConfiguration.expiresIn,
+          expiresIn: '2d',
           audience: this.authConfiguration.audience,
           issuer: this.authConfiguration.issuer,
         },

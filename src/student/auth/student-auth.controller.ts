@@ -30,7 +30,7 @@ export class StudentAuthController {
 				httpOnly: true,
 				secure: true,
 				sameSite: 'none',
-				maxAge: 1000 * 60 * 60,
+				maxAge: 2 * 24 * 60 * 60 * 1000,
 				path: '/',
 			});
 			// console.log(result)
@@ -52,7 +52,7 @@ export class StudentAuthController {
 				httpOnly: true,
 				secure: true,
 				sameSite: 'none',
-				maxAge: 1000 * 60 * 60,
+				maxAge: 2 * 24 * 60 * 60 * 1000,
 				path: '/',
 			});
 			return result 
@@ -60,6 +60,8 @@ export class StudentAuthController {
 			throw new BadRequestException('Unable to create User');
 		}
 	}
+
+
 
 	@Post('logout')
 	@HttpCode(HttpStatus.OK)
