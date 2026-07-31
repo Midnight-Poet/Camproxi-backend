@@ -11,7 +11,7 @@ import { ReviewsModule } from './common/reviews/reviews.module';
 import { RequestsModule } from './common/requests/requests.module';
 import { MailModule } from './common/mail/mail.module';
 import { SmsModule } from './common/sms/sms.module';
-import { ThrottlerModule } from '@nestjs/throttler';
+// import { ThrottlerModule } from '@nestjs/throttler';
 
 // Feature modules — one per portal
 import { AdminModule } from './admin/admin.module';
@@ -36,12 +36,12 @@ import { StudentModule } from './student/student.module';
 		AgentModule,
 		SmsModule,
 		StudentModule,
-		ThrottlerModule.forRoot([
-			{
-				ttl: 3600000, // 1 hour window
-				limit: 5, // max 10 requests per IP in that window
-			},
-		]),
+		// ThrottlerModule.forRoot([
+		// 	{
+		// 		ttl: 3600000, // 1 hour window
+		// 		limit: 5, // max 10 requests per IP in that window
+		// 	},
+		// ]),
 	],
 	controllers: [AppController],
 	providers: [AppService],
