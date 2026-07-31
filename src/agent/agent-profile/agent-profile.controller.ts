@@ -34,6 +34,7 @@ export class AgentProfileController {
     @Body() createAgentDto: CreateAgentDto,
     @Res({ passthrough: true }) res: Response,
   ) {
+    // Just to commit
     return this.agentProfileService.register(createAgentDto, res);
   }
 
