@@ -50,4 +50,13 @@ export class ProfileController {
     }
     return this.authService.verifyPhone(userId, body.otp);
   }
+
+  @Post('change-password')
+  async changePassword(@Req() req: Request, @Body() body: any) {
+    const userId = req['user']?.sub;
+    if (!body.oldPassword || !body.newPassword) {
+      throw new Error('Both oldPassword and newPassword are required');
+    }
+    return this.profileService.changePassword(userId, body.oldPassword, body.newPassword);
+  }
 }

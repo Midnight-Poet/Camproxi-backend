@@ -32,6 +32,10 @@ export class CreateProductDto {
   @IsNotEmpty()
   price!: string | number;
 
+  @IsNotEmpty()
+  @IsOptional()
+  isAvailable!: boolean;
+
   @Transform(({ value }) => {
       let parsed = value;
   

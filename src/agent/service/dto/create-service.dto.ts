@@ -30,4 +30,8 @@ export class CreateServiceDto {
 
   @IsNotEmpty()
   time!: any;
+
+  @IsNotEmpty()
+  @IsOptional()
+  isAvailable!: boolean;
 }

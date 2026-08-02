@@ -45,8 +45,13 @@ model Admin {
   email     String    @unique
   name      String?
   password  String
-  role      AdminRole @default(OFFICIAL)
-  createdAt DateTime  @default(now())
+  role       AdminRole @default(OFFICIAL)
+  
+  schoolId   String?   @db.ObjectId
+  school     School?   @relation(fields: [schoolId], references: [id])
+  campusName String?
+
+  createdAt  DateTime  @default(now())
 
   @@map("admins")
 }
@@ -63,6 +68,7 @@ model School {
   properties Property[]
   products   Product[]
   services   Service[]
+  admins     Admin[]
 
   @@map("schools")
 }
@@ -113,6 +119,7 @@ model Agent {
   emailOtpExpiry DateTime?
   phoneOtp       String?
   phoneOtpExpiry DateTime?
+  isSuspended    Boolean            @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -290,6 +297,7 @@ model User {
   emailOtpExpiry DateTime?
   phoneOtp       String?
   phoneOtpExpiry DateTime?
+  isSuspended    Boolean   @default(false)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
@@ -357,6 +365,32 @@ model Notification {
   updatedAt DateTime @updatedAt
 
   @@map("notifications")
+}
+
+// =============================================================================
+// GLOBAL — Reports & Support
+// =============================================================================
+
+enum ReportStatus {
+  OPEN
+  RESOLVED
+}
+
+model Report {
+  id           String        @id @default(auto()) @map("_id") @db.ObjectId
+  subject      String
+  message      String
+  reporterId   String        @db.ObjectId
+  reporterType RecipientType // STUDENT or AGENT
+  status       ReportStatus  @default(OPEN)
+  
+  reply        String?
+  repliedById  String?       @db.ObjectId
+  
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@map("reports")
 }
 
 // =============================================================================

@@ -275,6 +275,26 @@ export class AgentProfileService {
 		}
 	}
 
+	async changePassword(agentId: string, oldPassword: string, newPassword: string) {
+		const agent = await this.prisma.agent.findUnique({ where: { id: agentId } });
+		if (!agent) {
+			throw new NotFoundException('Agent not found');
+		}
+		
+		const isMatch = await bcrypt.compare(oldPassword, agent.password);
+		if (!isMatch) {
+			throw new UnauthorizedException('Incorrect old password');
+		}
+
+		const hashedPassword = await bcrypt.hash(newPassword, 10);
+		await this.prisma.agent.update({
+			where: { id: agentId },
+			data: { password: hashedPassword },
+		});
+		
+		return { message: 'Password updated successfully' };
+	}
+
 	async deleteAgentAccount(agentId: string) {
 		const agent = await this.prisma.agent.findUnique({
 			where: { id: agentId },

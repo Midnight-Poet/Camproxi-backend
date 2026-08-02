@@ -30,7 +30,13 @@ export class AdminAuthService {
     );
     if (passwordMatch) {
       const token = await this.jwtService.signAsync(
-        { sub: userDetail.id, email: userDetail.email, role: userDetail.role },
+        { 
+          sub: userDetail.id, 
+          email: userDetail.email, 
+          role: userDetail.role,
+          schoolId: userDetail.schoolId,
+          campusName: userDetail.campusName 
+        },
         {
           secret: this.authConfiguration.secret,
           expiresIn: '2d',

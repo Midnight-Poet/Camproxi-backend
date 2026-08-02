@@ -9,6 +9,9 @@ import {
 	UseGuards,
 } from '@nestjs/common';
 import { AdminAuthGuard } from '../auth/guards/admin-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { AdminRole } from '@prisma/client';
 import { SchoolService } from './school.service';
 import { LocationDto } from './dto/location.dto';
 import type { Request } from 'express';
@@ -17,21 +20,14 @@ import type { Request } from 'express';
 export class SchoolController {
 	constructor(private readonly schoolService: SchoolService) {}
 
-	@UseGuards(AdminAuthGuard)
+	@UseGuards(AdminAuthGuard, RolesGuard)
+	@Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN)
 	@Post('new')
 	public async createNewLocation(
 		@Body() location: LocationDto,
 		@Req() req: Request,
 	) {
 		try {
-			if (
-				req['admin']?.role !== 'SUPER_ADMIN' &&
-				req['admin']?.role !== 'ADMIN'
-			) {
-				throw new UnauthorizedException(
-					'You do not have permission to perform this action',
-				);
-			}
 			return await this.schoolService.createNewLocation(location);
 		} catch (error: any) {
 			throw new Error(error.message);

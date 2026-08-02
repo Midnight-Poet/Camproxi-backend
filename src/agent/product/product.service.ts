@@ -57,6 +57,7 @@ export class ProductService {
 					description: createDto.description,
 					price: Number(createDto.price),
 					delivery,
+					isAvailable: createDto.isAvailable,
 					images: formattedImages,
 					agentId,
 					schoolId,

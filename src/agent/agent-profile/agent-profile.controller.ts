@@ -134,4 +134,14 @@ export class AgentProfileController {
     res.clearCookie('jwt');
     return { message: 'Agent account deleted successfully' };
   }
+
+  @UseGuards(AgentAuthGuard)
+  @Post('change-password')
+  async changePassword(@Req() req: Request, @Body() body: any) {
+    const agentId = req['agent'].id;
+    if (!body.oldPassword || !body.newPassword) {
+      throw new BadRequestException('Both oldPassword and newPassword are required');
+    }
+    return this.agentProfileService.changePassword(agentId, body.oldPassword, body.newPassword);
+  }
 }
