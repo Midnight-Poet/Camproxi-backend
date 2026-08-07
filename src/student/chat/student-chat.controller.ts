@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards, UseInterceptors } from '@nestjs/common';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 import { ChatService } from 'src/common/chat/chat.service';
 import { StudentAuthGuard } from '../auth/guards/student-auth.guard';
 
@@ -8,11 +9,13 @@ export class StudentChatController {
   constructor(private readonly chatService: ChatService) {}
 
   @Get()
+  @UseInterceptors(CacheInterceptor)
   async getMyChats(@Req() req: any) {
     return this.chatService.getStudentChats(req.user.sub);
   }
 
   @Get(':chatId')
+  @UseInterceptors(CacheInterceptor)
   async getChatById(@Param('chatId') chatId: string) {
     return this.chatService.getChatById(chatId);
   }
@@ -32,6 +35,7 @@ export class StudentChatController {
   }
 
   @Get(':chatId/messages')
+  @UseInterceptors(CacheInterceptor)
   async getMessages(
     @Param('chatId') chatId: string,
     @Query('limit') limit: string,

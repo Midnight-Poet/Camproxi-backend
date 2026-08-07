@@ -9,6 +9,7 @@ import { JwtService } from '@nestjs/jwt';
 import authConfig from '../../../common/auth/config/auth.config';
 import type { ConfigType } from '@nestjs/config';
 import { Request } from 'express';
+import { PrismaService } from '../../../common/prisma/prisma.service';
 
 @Injectable()
 export class StudentAuthGuard implements CanActivate {
@@ -16,6 +17,7 @@ export class StudentAuthGuard implements CanActivate {
     private readonly jwtService: JwtService,
     @Inject(authConfig.KEY)
     private readonly authConfiguration: ConfigType<typeof authConfig>,
+    private readonly prisma: PrismaService,
   ) {}
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest<Request>();
@@ -30,9 +32,25 @@ export class StudentAuthGuard implements CanActivate {
         token,
         this.authConfiguration,
       );
+
+      const user = await this.prisma.user.findUnique({
+        where: { id: payload.sub },
+      });
+
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+
+      if (user.isSuspended) {
+        throw new UnauthorizedException('Account is suspended. Please contact support.');
+      }
+
       req['user'] = payload;
     } catch (err) {
-      throw new UnauthorizedException();
+      if (err instanceof UnauthorizedException) {
+        throw err;
+      }
+      throw new UnauthorizedException('Invalid or expired token');
     }
 
     return true;

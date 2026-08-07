@@ -11,6 +11,7 @@ import {
 	UseInterceptors,
 	UploadedFiles,
 } from '@nestjs/common';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 import { PropertyService } from './property.service';
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
@@ -62,6 +63,7 @@ export class PropertyController {
 	@UseGuards(AgentAuthGuard, RolesGuard)
 	@Roles(Role.AGENT)
 	@Get()
+	@UseInterceptors(CacheInterceptor)
 	findAllForAgent(@Req() req: Request) {
 		return this.propertyService.findAllByAgent(req['agent'].id);
 	}
@@ -69,6 +71,7 @@ export class PropertyController {
 	@UseGuards(AgentAuthGuard, RolesGuard)
 	@Roles(Role.AGENT)
 	@Get(':id')
+	@UseInterceptors(CacheInterceptor)
 	findOne(@Param('id') id: string, @Req() req: Request) {
 		return this.propertyService.findOne(id, req['agent'].id);
 	}
@@ -107,6 +110,7 @@ export class PropertyController {
 	}
 
 	@Get('fetch/students/:schoolId')
+	@UseInterceptors(CacheInterceptor)
 	async getAllByStudents(
 		@Req() req: Request,
 	) {

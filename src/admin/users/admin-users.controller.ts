@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Patch, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Param, Patch, Body, UseGuards, Request, Query } from '@nestjs/common';
 import { AdminUsersService } from './admin-users.service';
 import { AdminAuthGuard } from '../auth/guards/admin-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -12,8 +12,16 @@ export class AdminUsersController {
 
   @Get('students')
   @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.OFFICIAL)
-  async getStudents(@Request() req: any) {
-    return this.adminUsersService.getStudents(req.admin);
+  async getStudents(
+    @Request() req: any,
+    @Query('page') page: string,
+    @Query('limit') limit: string,
+  ) {
+    return this.adminUsersService.getStudents(
+      req.admin,
+      page ? parseInt(page, 10) : 1,
+      limit ? parseInt(limit, 10) : 20,
+    );
   }
 
   @Get('students/:id')
@@ -30,8 +38,16 @@ export class AdminUsersController {
 
   @Get('agents')
   @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.OFFICIAL)
-  async getAgents(@Request() req: any) {
-    return this.adminUsersService.getAgents(req.admin);
+  async getAgents(
+    @Request() req: any,
+    @Query('page') page: string,
+    @Query('limit') limit: string,
+  ) {
+    return this.adminUsersService.getAgents(
+      req.admin,
+      page ? parseInt(page, 10) : 1,
+      limit ? parseInt(limit, 10) : 20,
+    );
   }
 
   @Get('agents/:id')

@@ -14,7 +14,7 @@ import { JwtModule } from '@nestjs/jwt';
     AdminAuthService,
     { provide: HashtagProvider, useClass: BcryptProvider },
   ],
-  exports: [AdminAuthService],
+  exports: [AdminAuthService, JwtModule, ConfigModule],
   imports: [
     forwardRef(() => AdminsModule),
     ConfigModule.forFeature(authConfig),

@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Patch, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Param, Patch, UseGuards, Request, Query } from '@nestjs/common';
 import { AdminContentService } from './admin-content.service';
 import { AdminAuthGuard } from '../auth/guards/admin-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -12,8 +12,16 @@ export class AdminContentController {
 
   @Get('pending')
   @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.OFFICIAL)
-  async getPendingContent(@Request() req: any) {
-    return this.adminContentService.getPendingContent(req.admin);
+  async getPendingContent(
+    @Request() req: any,
+    @Query('page') page: string,
+    @Query('limit') limit: string,
+  ) {
+    return this.adminContentService.getPendingContent(
+      req.admin,
+      page ? parseInt(page, 10) : 1,
+      limit ? parseInt(limit, 10) : 20,
+    );
   }
 
   @Patch('properties/:id/verify')

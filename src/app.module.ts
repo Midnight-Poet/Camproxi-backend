@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { CacheModule } from '@nestjs/cache-manager';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -11,7 +12,8 @@ import { ReviewsModule } from './common/reviews/reviews.module';
 import { RequestsModule } from './common/requests/requests.module';
 import { MailModule } from './common/mail/mail.module';
 import { SmsModule } from './common/sms/sms.module';
-// import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 
 // Feature modules — one per portal
 import { AdminModule } from './admin/admin.module';
@@ -22,6 +24,9 @@ import { StudentModule } from './student/student.module';
 	imports: [
 		// Load environment variables from .env (globally available)
 		ConfigModule.forRoot({ isGlobal: true }),
+		
+		// Global Cache Module
+		CacheModule.register({ isGlobal: true, ttl: 60000 }), // 60 seconds default
 
 		// Shared infrastructure
 		PrismaModule,
@@ -36,15 +41,21 @@ import { StudentModule } from './student/student.module';
 		AgentModule,
 		SmsModule,
 		StudentModule,
-		// ThrottlerModule.forRoot([
-		// 	{
-		// 		ttl: 3600000, // 1 hour window
-		// 		limit: 5, // max 10 requests per IP in that window
-		// 	},
-		// ]),
+		ThrottlerModule.forRoot([
+			{
+				ttl: 60000, // 1 minute window
+				limit: 100, // max 100 requests per IP
+			},
+		]),
 	],
 	controllers: [AppController],
-	providers: [AppService],
+	providers: [
+		AppService,
+		{
+			provide: APP_GUARD,
+			useClass: ThrottlerGuard,
+		},
+	],
 	// app.module.ts
 })
 export class AppModule {}

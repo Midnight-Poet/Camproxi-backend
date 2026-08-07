@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from 'src/common/prisma/prisma.service';
+import { paginate } from 'src/common/utils/pagination.util';
 import { AdminRole } from '@prisma/client';
 
 @Injectable()
@@ -17,9 +18,9 @@ export class AdminUsersService {
     return {}; // SUPER_ADMIN and ADMIN see everything
   }
 
-  async getStudents(admin: any) {
+  async getStudents(admin: any, page: number = 1, limit: number = 20) {
     const scope = this.getLocationScope(admin);
-    return this.prisma.user.findMany({
+    return paginate(this.prisma.user, {
       where: scope,
       select: {
         id: true,
@@ -35,12 +36,12 @@ export class AdminUsersService {
         createdAt: true,
       },
       orderBy: { createdAt: 'desc' },
-    });
+    }, page, limit);
   }
 
-  async getAgents(admin: any) {
+  async getAgents(admin: any, page: number = 1, limit: number = 20) {
     const scope = this.getLocationScope(admin);
-    return this.prisma.agent.findMany({
+    return paginate(this.prisma.agent, {
       where: scope,
       select: {
         id: true,
@@ -58,7 +59,7 @@ export class AdminUsersService {
         createdAt: true,
       },
       orderBy: { createdAt: 'desc' },
-    });
+    }, page, limit);
   }
 
   async getStudentDetails(admin: any, studentId: string) {

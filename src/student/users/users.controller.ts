@@ -18,14 +18,14 @@ import { Request } from 'express';
 export class UsersController {
   constructor(private usersService: UsersService) {}
 
-  // @Get()
-  // async getUsers(
-  //   @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
-  //   @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-  // ) {
-  //   const users = await this.usersService.getAllUsers();
-  //   return users;
-  // }
+  @Get()
+  async getUsers(
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+  ) {
+    const users = await this.usersService.getAllUsers(page, limit);
+    return users;
+  }
 
   @Get('me')
   async getProfile(@Req() req: Request) {

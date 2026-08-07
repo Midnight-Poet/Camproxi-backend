@@ -1,141 +1,177 @@
 import {
-  WebSocketGateway,
-  WebSocketServer,
-  SubscribeMessage,
-  OnGatewayConnection,
-  OnGatewayDisconnect,
-  ConnectedSocket,
-  MessageBody,
+	WebSocketGateway,
+	WebSocketServer,
+	SubscribeMessage,
+	OnGatewayConnection,
+	OnGatewayDisconnect,
+	ConnectedSocket,
+	MessageBody,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { ChatService, SendMessageDto } from './chat.service';
 import { JwtService } from '@nestjs/jwt';
-import * as jwt from 'jsonwebtoken';
+import { RecipientType } from '@prisma/client';
+import { authenticateSocket } from '../utils/socket-auth.util';
+import { PrismaService } from '../prisma/prisma.service';
+
+interface ConnectedClient {
+	socketIds: Set<string>;
+	role: RecipientType;
+}
 
 @WebSocketGateway({
-  cors: {
-    origin: '*',
-    credentials: true,
-  },
-  namespace: '/chat'
+	cors: {
+		origin: [
+			process.env.AGENT_URL || 'http://localhost:5173',
+			process.env.STUDENT_URL || 'http://localhost:5174',
+      process.env.ADMIN_URL || 'http://localhost:5175',
+		],
+		credentials: true,
+	},
+	namespace: '/chat',
 })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
-  @WebSocketServer()
-  server: Server;
+	@WebSocketServer()
+	server: Server;
 
-  private connectedClients = new Map<string, { socketId: string, role: 'STUDENT' | 'AGENT' }>();
+	private connectedClients = new Map<string, ConnectedClient>();
+	private socketToUser = new Map<string, string>();
 
-  constructor(
-    private readonly chatService: ChatService,
-    private readonly jwtService: JwtService,
-  ) {}
+	constructor(
+		private readonly chatService: ChatService,
+		private readonly jwtService: JwtService,
+		private readonly prisma: PrismaService,
+	) {}
 
-  async handleConnection(client: Socket) {
-    try {
-      const authCookie = client.handshake.headers.cookie;
-      if (!authCookie) {
-        client.disconnect();
-        return;
-      }
+	async handleConnection(client: Socket) {
+		const auth = await authenticateSocket(client, this.jwtService);
+		if (!auth) {
+			client.disconnect();
+			return;
+		}
 
-      const cookies = authCookie.split(';').reduce((acc, cookieStr) => {
-        const [key, value] = cookieStr.trim().split('=');
-        acc[key] = value;
-        return acc;
-      }, {} as Record<string, string>);
+		const { userId, role } = auth;
 
-      let userId = null;
-      let role: 'STUDENT' | 'AGENT' | null = null;
+		const existing = this.connectedClients.get(userId);
+		if (existing) {
+			existing.socketIds.add(client.id);
+		} else {
+			this.connectedClients.set(userId, {
+				socketIds: new Set([client.id]),
+				role,
+			});
+		}
+		this.socketToUser.set(client.id, userId);
+	}
 
-      // Try Student (access_token via nestjs/jwt)
-      if (cookies['access_token']) {
-        const decoded = await this.jwtService.verifyAsync(cookies['access_token']);
-        userId = decoded.sub;
-        role = 'STUDENT';
-      } 
-      // Try Agent (jwt via jsonwebtoken)
-      else if (cookies['jwt']) {
-        const decoded = jwt.verify(cookies['jwt'], process.env.AGENT_JWT_TOKEN as string) as any;
-        userId = decoded.agentId;
-        role = 'AGENT';
-      }
+	handleDisconnect(client: Socket) {
+		const userId = this.socketToUser.get(client.id);
+		if (!userId) return;
 
-      if (!userId || !role) {
-        client.disconnect();
-        return;
-      }
+		this.socketToUser.delete(client.id);
 
-      // Store connected client
-      this.connectedClients.set(userId, { socketId: client.id, role });
-    } catch (error) {
-      console.log('Socket connection error:', error.message);
-      client.disconnect();
-    }
-  }
+		const entry = this.connectedClients.get(userId);
+		if (!entry) return;
 
-  handleDisconnect(client: Socket) {
-    for (const [userId, data] of this.connectedClients.entries()) {
-      if (data.socketId === client.id) {
-        this.connectedClients.delete(userId);
-        console.log(`Client disconnected: ${userId}`);
-        break;
-      }
-    }
-  }
+		entry.socketIds.delete(client.id);
+		if (entry.socketIds.size === 0) {
+			this.connectedClients.delete(userId);
+		}
 
-  @SubscribeMessage('joinChat')
-  async handleJoinChat(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { chatId: string },
-  ) {
-    client.join(payload.chatId);
-  }
+		console.log(`Client disconnected: ${userId}`);
+	}
 
-  @SubscribeMessage('sendMessage')
-  async handleSendMessage(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() payload: SendMessageDto,
-  ) {
-    try {
-      const message = await this.chatService.saveMessage(payload);
-      
-      // Broadcast the message to all users in the chat room
-      this.server.to(payload.chatId).emit('newMessage', message);
-    } catch (error) {
-      console.error('Error saving message:', error);
-    }
-  }
+	@SubscribeMessage('joinChat')
+	async handleJoinChat(
+		@ConnectedSocket() client: Socket,
+		@MessageBody() payload: { chatId: string },
+	) {
+		try {
+			const userId = this.socketToUser.get(client.id);
+			if (!userId) return;
 
-  @SubscribeMessage('markAsRead')
-  async handleMarkAsRead(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { chatId: string },
-  ) {
-    try {
-      let userId: string | null = null;
-      let role: 'STUDENT' | 'AGENT' | null = null;
+			// SECURITY: Verify the user is a participant of this chat
+			const chat = await this.prisma.chat.findUnique({
+				where: { id: payload.chatId },
+			});
 
-      // Find user from connected clients
-      for (const [id, data] of this.connectedClients.entries()) {
-        if (data.socketId === client.id) {
-          userId = id;
-          role = data.role;
-          break;
-        }
-      }
+			if (!chat) return;
 
-      if (!userId || !role) return;
+			if (chat.studentId !== userId && chat.agentId !== userId) {
+				console.warn(`[SECURITY] User ${userId} attempted to join unauthorized chat ${payload.chatId}`);
+				return;
+			}
 
-      await this.chatService.markMessagesAsRead(payload.chatId, userId, role);
-      
-      // Notify everyone in the chat room that messages were read
-      this.server.to(payload.chatId).emit('messagesRead', { 
-        chatId: payload.chatId,
-        readBy: role,
-        readerId: userId
-      });
-    } catch (error) {
-      console.error('Error marking messages as read:', error);
-    }
-  }
+			client.join(payload.chatId);
+		} catch (error) {
+			console.error('Error in handleJoinChat:', error);
+		}
+	}
+
+	@SubscribeMessage('sendMessage')
+	async handleSendMessage(
+		@ConnectedSocket() client: Socket,
+		@MessageBody() payload: SendMessageDto,
+	) {
+		try {
+			const message = await this.chatService.saveMessage(payload);
+
+			// Broadcast the message to all users in the chat room (all their
+			// connected tabs/devices are already in the room via joinChat).
+			this.server.to(payload.chatId).emit('newMessage', message);
+		} catch (error) {
+			console.error('Error saving message:', error);
+		}
+	}
+
+	@SubscribeMessage('markAsRead')
+	async handleMarkAsRead(
+		@ConnectedSocket() client: Socket,
+		@MessageBody() payload: { chatId: string },
+	) {
+		try {
+			const userId = this.socketToUser.get(client.id);
+			if (!userId) return;
+
+			const role = this.connectedClients.get(userId)?.role;
+			if (role !== RecipientType.STUDENT && role !== RecipientType.AGENT)
+				return;
+
+			await this.chatService.markMessagesAsRead(
+				payload.chatId,
+				userId,
+				role,
+			);
+
+			// Notify everyone in the chat room that messages were read
+			this.server.to(payload.chatId).emit('messagesRead', {
+				chatId: payload.chatId,
+				readBy: role,
+				readerId: userId,
+			});
+		} catch (error) {
+			console.error('Error marking messages as read:', error);
+		}
+	}
+
+	@SubscribeMessage('deleteMessage')
+	async handleDeleteMessage(
+		@ConnectedSocket() client: Socket,
+		@MessageBody() payload: { messageId: string; chatId: string },
+	) {
+		try {
+			const userId = this.socketToUser.get(client.id);
+			if (!userId) return;
+
+			await this.chatService.deleteMessage(payload.messageId, userId);
+
+			// Broadcast the deletion so both parties remove it from UI
+			this.server.to(payload.chatId).emit('messageDeleted', {
+				messageId: payload.messageId,
+				chatId: payload.chatId,
+			});
+		} catch (error) {
+			console.error('Error deleting message:', error);
+		}
+	}
 }

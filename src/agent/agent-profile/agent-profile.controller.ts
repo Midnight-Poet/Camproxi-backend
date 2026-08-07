@@ -13,6 +13,7 @@ import {
   Param,
   BadRequestException,
 } from '@nestjs/common';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 import { AgentProfileService } from './agent-profile.service';
 import { CreateAgentDto } from './dto/create-agent.dto';
 import { LoginAgentDto } from './dto/login-agent.dto';
@@ -91,18 +92,21 @@ export class AgentProfileController {
 
   @UseGuards(AgentAuthGuard)
   @Get('profile')
+  @UseInterceptors(CacheInterceptor)
   getProfile(@Req() req: Request) {
     return this.agentProfileService.getAgentProfile(req['agent'].id);
   }
 
   @UseGuards(AgentAuthGuard)
   @Get('me')
+  @UseInterceptors(CacheInterceptor)
   getMe(@Req() req: Request) {
     return this.agentProfileService.getAgentProfile(req['agent'].id);
   }
 
   @UseGuards(AgentAuthGuard)
   @Get('student/:id')
+  @UseInterceptors(CacheInterceptor)
   getStudentProfile(@Param('id') id: string) {
     return this.agentProfileService.getStudentProfile(id);
   }

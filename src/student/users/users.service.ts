@@ -7,6 +7,7 @@ import {
 import { CreateUserDto } from './dto/create-user.dto';
 import { HashtagProvider } from '../../common/auth/providers/hashtag.provider';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { paginate } from 'src/common/utils/pagination.util';
 
 @Injectable()
 export class UsersService {
@@ -15,9 +16,8 @@ export class UsersService {
     private readonly hashPassword: HashtagProvider,
   ) {}
 
-  public async getAllUsers() {
-    const allUsers = await this.prisma.user.findMany();
-    return allUsers;
+  public async getAllUsers(page: number = 1, limit: number = 20) {
+    return paginate(this.prisma.user, {}, page, limit);
   }
 
   public async getUserById(id: string) {

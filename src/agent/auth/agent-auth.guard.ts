@@ -33,6 +33,10 @@ export class AgentAuthGuard implements CanActivate {
         throw new UnauthorizedException('Agent not found');
       }
 
+      if (agent.isSuspended) {
+        throw new UnauthorizedException('Account is suspended. Please contact support.');
+      }
+
       request['agent'] = agent;
       return true;
     } catch (error) {

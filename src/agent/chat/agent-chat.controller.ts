@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards, UseInterceptors } from '@nestjs/common';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 import { ChatService } from 'src/common/chat/chat.service';
 import { AgentAuthGuard } from '../auth/agent-auth.guard';
 
@@ -8,11 +9,13 @@ export class AgentChatController {
   constructor(private readonly chatService: ChatService) {}
 
   @Get()
+  @UseInterceptors(CacheInterceptor)
   async getMyChats(@Req() req: any) {
     return this.chatService.getAgentChats(req.agent.id);
   }
 
   @Get(':chatId')
+  @UseInterceptors(CacheInterceptor)
   async getChatById(@Param('chatId') chatId: string) {
     return this.chatService.getChatById(chatId);
   }
@@ -31,6 +34,7 @@ export class AgentChatController {
   }
 
   @Get(':chatId/messages')
+  @UseInterceptors(CacheInterceptor)
   async getMessages(
     @Param('chatId') chatId: string,
     @Query('limit') limit: string,

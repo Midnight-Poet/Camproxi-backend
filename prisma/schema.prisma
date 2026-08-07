@@ -129,6 +129,7 @@ model Agent {
   services   Service[]
   chats      Chat[]
 
+  @@index([schoolId])
   @@map("agents")
 }
 
@@ -170,6 +171,9 @@ model Property {
   averageRating Float @default(0.0)
   totalReviews  Int   @default(0)
 
+  @@index([status, schoolId])
+  @@index([agentId])
+  @@index([campus, isVacant])
   @@map("properties")
 }
 
@@ -215,6 +219,9 @@ model Product {
   averageRating Float @default(0.0)
   totalReviews  Int   @default(0)
 
+  @@index([status, schoolId])
+  @@index([agentId])
+  @@index([campus, isAvailable])
   @@map("products")
 }
 
@@ -256,6 +263,9 @@ model Service {
   averageRating Float @default(0.0)
   totalReviews  Int   @default(0)
 
+  @@index([status, schoolId])
+  @@index([agentId])
+  @@index([campus, isAvailable])
   @@map("services")
 }
 
@@ -289,7 +299,7 @@ model User {
   username       String    @unique
   password       String
   email          String    @unique
-  phone          String?   @unique
+  phone          String?
   isverified     Boolean   @default(false)
   emailVerified  Boolean   @default(false)
   phoneVerified  Boolean   @default(false)
@@ -318,6 +328,7 @@ model User {
 
   notificationsEnabled Boolean @default(true)
 
+  @@index([schoolId])
   @@unique([id, email])
   @@map("users")
 }
@@ -345,6 +356,7 @@ enum NotificationCat {
   REQUEST_CREATED
   NEW_MESSAGE
   ACCOUNT_VERIFIED
+  ITEM_VERIFIED
 }
 
 model Notification {
@@ -407,6 +419,7 @@ model Rating {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  @@index([itemId, itemCategory])
   @@unique([studentId, itemId])
   @@map("ratings")
 }
@@ -425,6 +438,7 @@ model Review {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([itemId, itemCategory])
   @@map("reviews")
 }
 
@@ -451,6 +465,7 @@ model Request {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
+  @@index([status])
   @@map("requests")
 }
 
@@ -490,5 +505,6 @@ model Message {
   isRead     Boolean    @default(false)
   createdAt  DateTime   @default(now())
 
+  @@index([chatId, createdAt])
   @@map("messages")
 }

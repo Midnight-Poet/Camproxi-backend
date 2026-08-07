@@ -1,7 +1,9 @@
-import { NestFactory } from '@nestjs/core';
+import { NestFactory, HttpAdapterHost } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import * as cookieParser from 'cookie-parser';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -16,13 +18,19 @@ async function bootstrap() {
       },
     }),
   );
+  app.enableShutdownHooks();
 
+  const httpAdapter = app.get(HttpAdapterHost);
+  app.useGlobalFilters(new GlobalExceptionFilter(httpAdapter));
+
+  app.use(helmet());
   app.use(cookieParser());
 
   app.enableCors({
     origin: [
       process.env.AGENT_URL || 'http://localhost:5173',
       process.env.STUDENT_URL || 'http://localhost:5174',
+      process.env.ADMIN_URL || 'http://localhost:5175',
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],

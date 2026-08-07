@@ -192,4 +192,24 @@ export class ChatService {
 			data: { isRead: true },
 		});
 	}
+
+	async deleteMessage(messageId: string, senderId: string) {
+		const message = await this.prisma.message.findUnique({
+			where: { id: messageId },
+		});
+		
+		if (!message) {
+			throw new NotFoundException('Message not found');
+		}
+
+		if (message.senderId !== senderId) {
+			throw new BadRequestException('You can only delete your own messages');
+		}
+
+		await this.prisma.message.delete({
+			where: { id: messageId },
+		});
+
+		return message;
+	}
 }
