@@ -8,6 +8,8 @@ import { AgentNotificationModule } from './notification/agent-notification.modul
 import { AgentReviewsModule } from './reviews/agent-reviews.module';
 import { AgentRequestsModule } from './requests/agent-requests.module';
 import { AgentChatModule } from './chat/agent-chat.module';
+import { AgentReportsModule } from './reports/agent-reports.module';
+import { MetricsModule } from './metrics/metrics.module';
 
 @Module({
   imports: [
@@ -20,6 +22,8 @@ import { AgentChatModule } from './chat/agent-chat.module';
     AgentReviewsModule,
     AgentRequestsModule,
     AgentChatModule,
+    AgentReportsModule,
+    MetricsModule,
   ],
 })
 export class AgentModule {}

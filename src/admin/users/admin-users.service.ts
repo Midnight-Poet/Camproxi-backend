@@ -2,10 +2,14 @@ import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/commo
 import { PrismaService } from 'src/common/prisma/prisma.service';
 import { paginate } from 'src/common/utils/pagination.util';
 import { AdminRole } from '@prisma/client';
+import { AuditLogsService } from '../audit-logs/audit-logs.service';
 
 @Injectable()
 export class AdminUsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditLogsService: AuditLogsService,
+  ) {}
 
   // Helpers to get the scope condition for the admin
   private getLocationScope(admin: any) {
@@ -101,10 +105,14 @@ export class AdminUsersService {
     const student = await this.prisma.user.findFirst({ where: { id: studentId, ...scope } });
     if (!student) throw new NotFoundException('Student not found or out of scope');
 
-    return this.prisma.user.update({
+    const result = await this.prisma.user.update({
       where: { id: studentId },
       data: { isSuspended: suspend },
     });
+
+    await this.auditLogsService.logAction(admin.sub, 'SUSPENDED_USER', JSON.stringify({ userId: studentId, suspend }));
+
+    return result;
   }
 
   async toggleAgentSuspension(admin: any, agentId: string, suspend: boolean) {
@@ -112,9 +120,13 @@ export class AdminUsersService {
     const agent = await this.prisma.agent.findFirst({ where: { id: agentId, ...scope } });
     if (!agent) throw new NotFoundException('Agent not found or out of scope');
 
-    return this.prisma.agent.update({
+    const result = await this.prisma.agent.update({
       where: { id: agentId },
       data: { isSuspended: suspend },
     });
+
+    await this.auditLogsService.logAction(admin.sub, 'SUSPENDED_AGENT', JSON.stringify({ agentId, suspend }));
+
+    return result;
   }
 }

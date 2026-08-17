@@ -8,6 +8,9 @@ import { StudentNotificationModule } from './notification/student-notification.m
 import { StudentReviewsModule } from './reviews/student-reviews.module';
 import { StudentRequestsModule } from './requests/student-requests.module';
 import { StudentChatModule } from './chat/student-chat.module';
+import { StudentReportsModule } from './reports/student-reports.module';
+import { SearchModule } from './search/search.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -20,6 +23,9 @@ import { StudentChatModule } from './chat/student-chat.module';
     StudentReviewsModule,
     StudentRequestsModule,
     StudentChatModule,
+    StudentReportsModule,
+    SearchModule,
+    NotificationsModule,
   ]
 })
 export class StudentModule {}

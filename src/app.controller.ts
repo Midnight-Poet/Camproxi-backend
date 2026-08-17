@@ -9,4 +9,9 @@ export class AppController {
   getHealth(): object {
     return this.appService.getHealth();
   }
+
+  @Get('api/public/schools')
+  async getPublicSchools() {
+    return this.appService.getPublicSchools();
+  }
 }

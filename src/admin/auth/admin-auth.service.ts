@@ -3,7 +3,12 @@ import {
   Inject,
   Injectable,
   UnauthorizedException,
+  NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
+import { PrismaService } from '../../common/prisma/prisma.service';
+import { MailService } from '../../common/mail/mail.service';
+import * as bcrypt from 'bcrypt';
 import { AdminsService } from '../admins/admins.service';
 import { LoginDto } from './dto/login.dto';
 import { HashtagProvider } from '../../common/auth/providers/hashtag.provider';
@@ -20,6 +25,8 @@ export class AdminAuthService {
     @Inject(authConfig.KEY)
     private readonly authConfiguration: ConfigType<typeof authConfig>,
     private readonly jwtService: JwtService,
+    private readonly prisma: PrismaService,
+    private readonly mailService: MailService,
   ) {}
 
   public async login(user: LoginDto) {
@@ -76,5 +83,58 @@ export class AdminAuthService {
         throw new UnauthorizedException('Unauthorized action: Only SUPER_ADMINs can create admins');
       }
     }
+  }
+
+  public async forgotPassword(email: string) {
+    const admin = await this.prisma.admin.findUnique({ where: { email } });
+    if (!admin) {
+      throw new NotFoundException('Admin not found');
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const hashedOtp = await bcrypt.hash(otp, 10);
+    const resetOtpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
+
+    await this.prisma.admin.update({
+      where: { id: admin.id },
+      data: { resetOtp: hashedOtp, resetOtpExpiry },
+    });
+
+    this.mailService.sendPasswordResetEmail(admin.email, otp, admin.name || 'Admin').catch(console.error);
+
+    return { message: 'Password reset OTP sent to email successfully' };
+  }
+
+  public async resetPassword(email: string, otp: string, newPassword: string) {
+    const admin = await this.prisma.admin.findUnique({ where: { email } });
+    if (!admin) {
+      throw new NotFoundException('Admin not found');
+    }
+
+    if (!admin.resetOtp || !admin.resetOtpExpiry) {
+      throw new BadRequestException('No password reset requested');
+    }
+
+    if (admin.resetOtpExpiry < new Date()) {
+      throw new BadRequestException('OTP has expired');
+    }
+
+    const isOtpValid = await bcrypt.compare(otp, admin.resetOtp);
+    if (!isOtpValid) {
+      throw new BadRequestException('Invalid OTP');
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await this.prisma.admin.update({
+      where: { id: admin.id },
+      data: {
+        password: hashedPassword,
+        resetOtp: null,
+        resetOtpExpiry: null,
+      },
+    });
+
+    return { message: 'Password has been reset successfully' };
   }
 }

@@ -1,13 +1,23 @@
-import { Controller, Get, Patch, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, UseGuards, Request } from '@nestjs/common';
 import { AdminsService } from './admins.service';
 import { AdminAuthGuard } from '../auth/guards/admin-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { AdminRole } from '@prisma/client';
 import { UpdateAdminDto } from './dto/update-admin.dto';
+import { CreateAdminDto } from './dto/create-admin.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Controller('api/admin/admins')
-@UseGuards(AdminAuthGuard)
+@UseGuards(AdminAuthGuard, RolesGuard)
 export class AdminsController {
   constructor(private readonly adminsService: AdminsService) {}
+
+  @Get()
+  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN)
+  async getAllAdmins(@Request() req: any) {
+    return this.adminsService.getAllAdmins(req.admin);
+  }
 
   @Get('me')
   async getProfile(@Request() req: any) {

@@ -4,6 +4,7 @@ import {
 	UnauthorizedException,
 	NotFoundException,
 	BadRequestException,
+	ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { AgentAuthService } from '../auth/agent-auth.service';
@@ -65,6 +66,9 @@ export class AgentProfileService {
 		const agent = await this.prisma.agent.findUnique({ where: { email } });
 		if (!agent || !(await bcrypt.compare(password, agent.password))) {
 			throw new UnauthorizedException('Invalid credentials');
+		}
+		if (agent.isSuspended) {
+			throw new ForbiddenException('account is suspended');
 		}
 		const token = this.authService.generateToken(
 			agent.id,
@@ -291,8 +295,60 @@ export class AgentProfileService {
 			where: { id: agentId },
 			data: { password: hashedPassword },
 		});
-		
 		return { message: 'Password updated successfully' };
+	}
+
+	async forgotPassword(email: string) {
+		const agent = await this.prisma.agent.findUnique({ where: { email } });
+		if (!agent) {
+			throw new NotFoundException('Agent not found');
+		}
+
+		const otp = Math.floor(100000 + Math.random() * 900000).toString();
+		const hashedOtp = await bcrypt.hash(otp, 10);
+		const resetOtpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
+
+		await this.prisma.agent.update({
+			where: { id: agent.id },
+			data: { resetOtp: hashedOtp, resetOtpExpiry },
+		});
+
+		this.mailService.sendPasswordResetEmail(agent.email, otp, agent.firstName).catch(console.error);
+
+		return { message: 'Password reset OTP sent to email successfully' };
+	}
+
+	async resetPassword(email: string, otp: string, newPassword: string) {
+		const agent = await this.prisma.agent.findUnique({ where: { email } });
+		if (!agent) {
+			throw new NotFoundException('Agent not found');
+		}
+
+		if (!agent.resetOtp || !agent.resetOtpExpiry) {
+			throw new BadRequestException('No password reset requested');
+		}
+
+		if (agent.resetOtpExpiry < new Date()) {
+			throw new BadRequestException('OTP has expired');
+		}
+
+		const isOtpValid = await bcrypt.compare(otp, agent.resetOtp);
+		if (!isOtpValid) {
+			throw new BadRequestException('Invalid OTP');
+		}
+
+		const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+		await this.prisma.agent.update({
+			where: { id: agent.id },
+			data: {
+				password: hashedPassword,
+				resetOtp: null,
+				resetOtpExpiry: null,
+			},
+		});
+
+		return { message: 'Password has been reset successfully' };
 	}
 
 	async deleteAgentAccount(agentId: string) {
@@ -318,4 +374,11 @@ export class AgentProfileService {
 			path: '/',
 		});
 	}
+
+
+  async getAgentSchool(agentId: string) {
+    const agent = await this.prisma.agent.findUnique({ where: { id: agentId }, include: { school: true } });
+    if (!agent || !agent.school) throw new NotFoundException('School not found for this agent');
+    return agent.school;
+  }
 }

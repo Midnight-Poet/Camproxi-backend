@@ -5,6 +5,7 @@ import { StudentAuthModule } from '../auth/student-auth.module';
 import authConfig from '../../common/auth/config/auth.config';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
+import { CloudinaryModule } from '../../common/cloudinary/cloudinary.module';
 
 @Module({
   providers: [ProfileService],
@@ -13,6 +14,7 @@ import { JwtModule } from '@nestjs/jwt';
     StudentAuthModule,
     ConfigModule.forFeature(authConfig),
     JwtModule.registerAsync(authConfig.asProvider()),
+    CloudinaryModule,
   ],
 })
 export class ProfileModule {}

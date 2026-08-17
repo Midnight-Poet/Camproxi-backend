@@ -37,12 +37,23 @@ export class AdminAuthController {
       });
       return {
         message: 'Login successful',
-        user: result.user,
-        token: result.token,
+        user: result.user
       };
     } catch (error) {
       return error;
     }
+  }
+
+  @Post('/logout')
+  @HttpCode(HttpStatus.OK)
+  async logout(@Res({ passthrough: true }) response: Response) {
+    response.clearCookie('access_token', {
+      httpOnly: true,
+      secure: process.env.ENV_MODE === 'PROD',
+      sameSite: 'lax',
+      path: '/',
+    });
+    return { message: 'Logged out successfully' };
   }
 
   @UseGuards(AdminCreateGuard)
@@ -64,8 +75,24 @@ export class AdminAuthController {
       const result: any = await this.authService.createUser(roleOrKey, data.user);
       return result?.newUser || result;
     } catch (err: any) {
-      console.log(err);
       throw new BadRequestException(err.message || 'Error creating user');
     }
+  }
+
+  @Post('/forgot-password')
+  async forgotPassword(@Body('email') email: string) {
+    if (!email) {
+      throw new BadRequestException('Email is required');
+    }
+    return this.authService.forgotPassword(email);
+  }
+
+  @Post('/reset-password')
+  async resetPassword(@Body() body: any) {
+    const { email, otp, newPassword } = body;
+    if (!email || !otp || !newPassword) {
+      throw new BadRequestException('Email, otp, and newPassword are required');
+    }
+    return this.authService.resetPassword(email, otp, newPassword);
   }
 }

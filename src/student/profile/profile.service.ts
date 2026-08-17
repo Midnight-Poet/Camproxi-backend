@@ -48,4 +48,13 @@ export class ProfileService {
     
     return { message: 'Password updated successfully' };
   }
+
+
+  async getStudentSchool(userId: string) {
+    const user = await this.prismaService.user.findUnique({ where: { id: userId }, include: { school: true } });
+    if (!user || !user.school) throw new NotFoundException('School not found for this user');
+    return user.school;
+  }
+
 }
+

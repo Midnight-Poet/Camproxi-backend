@@ -84,4 +84,21 @@ export class StudentAuthController {
 	public async getUserByUsername(@Param('username') username: string) {
 		return this.authService.findUserByUsername(username)
 	}
+
+	@Post('forgot-password')
+	async forgotPassword(@Body('email') email: string) {
+		if (!email) {
+			throw new BadRequestException('Email is required');
+		}
+		return this.authService.forgotPassword(email);
+	}
+
+	@Post('reset-password')
+	async resetPassword(@Body() body: any) {
+		const { email, otp, newPassword } = body;
+		if (!email || !otp || !newPassword) {
+			throw new BadRequestException('Email, otp, and newPassword are required');
+		}
+		return this.authService.resetPassword(email, otp, newPassword);
+	}
 }

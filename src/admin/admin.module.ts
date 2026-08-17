@@ -7,6 +7,9 @@ import { AdminUsersModule } from './users/admin-users.module';
 import { AdminContentModule } from './content/admin-content.module';
 import { AdminReportsModule } from './reports/admin-reports.module';
 import { AdminMetricsModule } from './metrics/admin-metrics.module';
+import { AuditLogsModule } from './audit-logs/audit-logs.module';
+import { SettingsModule } from './settings/settings.module';
+import { SearchModule } from './search/search.module';
 
 @Module({
   imports: [
@@ -16,7 +19,10 @@ import { AdminMetricsModule } from './metrics/admin-metrics.module';
     AdminUsersModule, 
     AdminContentModule,
     AdminReportsModule,
-    AdminMetricsModule
+    AdminMetricsModule,
+    AuditLogsModule,
+    SettingsModule,
+    SearchModule
   ],
 })
 export class AdminModule {}

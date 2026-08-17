@@ -3,7 +3,11 @@ import {
 	Inject,
 	Injectable,
 	UnauthorizedException,
+	NotFoundException,
+	BadRequestException,
+	ForbiddenException,
 } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { UsersService } from '../users/users.service';
 import { LoginDto } from './dto/login.dto';
@@ -39,6 +43,9 @@ export class StudentAuthService {
 			userDetail.password,
 		);
 		if (passwordMatch) {
+			if (userDetail.isSuspended) {
+				throw new ForbiddenException('account is suspended');
+			}
 			const token = await this.jwtService.signAsync(
 				{
 					sub: userDetail.id,
@@ -225,14 +232,59 @@ export class StudentAuthService {
 		return { message: 'OTP sent to phone successfully' };
 	}
 
-	// public async findUserByEmail(email: string) {
-	// 	const user = await this.prisma.user.findUnique({
-	// 		where: {
-	// 			email,
-	// 		},
-	// 	});
-	// 	if (user) return true
-
-	// 	return false
+	// 		return false
 	// }
+
+	public async forgotPassword(email: string) {
+		const user = await this.prisma.user.findUnique({ where: { email } });
+		if (!user) {
+			throw new NotFoundException('User not found');
+		}
+
+		const otp = Math.floor(100000 + Math.random() * 900000).toString();
+		const hashedOtp = await bcrypt.hash(otp, 10);
+		const resetOtpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
+
+		await this.prisma.user.update({
+			where: { id: user.id },
+			data: { resetOtp: hashedOtp, resetOtpExpiry },
+		});
+
+		this.mailService.sendPasswordResetEmail(user.email, otp, user.firstName).catch(console.error);
+
+		return { message: 'Password reset OTP sent to email successfully' };
+	}
+
+	public async resetPassword(email: string, otp: string, newPassword: string) {
+		const user = await this.prisma.user.findUnique({ where: { email } });
+		if (!user) {
+			throw new NotFoundException('User not found');
+		}
+
+		if (!user.resetOtp || !user.resetOtpExpiry) {
+			throw new BadRequestException('No password reset requested');
+		}
+
+		if (user.resetOtpExpiry < new Date()) {
+			throw new BadRequestException('OTP has expired');
+		}
+
+		const isOtpValid = await bcrypt.compare(otp, user.resetOtp);
+		if (!isOtpValid) {
+			throw new BadRequestException('Invalid OTP');
+		}
+
+		const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+		await this.prisma.user.update({
+			where: { id: user.id },
+			data: {
+				password: hashedPassword,
+				resetOtp: null,
+				resetOtpExpiry: null,
+			},
+		});
+
+		return { message: 'Password has been reset successfully' };
+	}
 }

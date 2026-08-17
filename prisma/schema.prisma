@@ -40,18 +40,24 @@ type Campus {
 }
 
 model Admin {
-  id        String    @id @default(auto()) @map("_id") @db.ObjectId
-  username  String    @unique
-  email     String    @unique
-  name      String?
-  password  String
-  role       AdminRole @default(OFFICIAL)
-  
-  schoolId   String?   @db.ObjectId
-  school     School?   @relation(fields: [schoolId], references: [id])
+  id       String    @id @default(auto()) @map("_id") @db.ObjectId
+  username String    @unique
+  email    String    @unique
+  name     String?
+  password String
+  role     AdminRole @default(OFFICIAL)
+
+  schoolId   String? @db.ObjectId
+  school     School? @relation(fields: [schoolId], references: [id])
   campusName String?
 
-  createdAt  DateTime  @default(now())
+  createdAt DateTime @default(now())
+
+  auditLogs       AuditLog[]
+  assignedReports Report[]
+
+  resetOtp       String?
+  resetOtpExpiry DateTime?
 
   @@map("admins")
 }
@@ -119,6 +125,8 @@ model Agent {
   emailOtpExpiry DateTime?
   phoneOtp       String?
   phoneOtpExpiry DateTime?
+  resetOtp       String?
+  resetOtpExpiry DateTime?
   isSuspended    Boolean            @default(false)
 
   createdAt DateTime @default(now())
@@ -161,12 +169,13 @@ model Property {
   agentId String @db.ObjectId
   agent   Agent  @relation(fields: [agentId], references: [id])
 
-  isVacant  Boolean  @default(true)
-  status    String   @default("pending")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  school    School?  @relation(fields: [schoolId], references: [id])
-  schoolId  String?  @db.ObjectId
+  isVacant     Boolean  @default(true)
+  status       String   @default("pending")
+  rejectReason String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  school       School?  @relation(fields: [schoolId], references: [id])
+  schoolId     String?  @db.ObjectId
 
   averageRating Float @default(0.0)
   totalReviews  Int   @default(0)
@@ -209,12 +218,13 @@ model Product {
   agentId String @db.ObjectId
   agent   Agent  @relation(fields: [agentId], references: [id])
 
-  isAvailable Boolean  @default(true)
-  status      String   @default("pending")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  school      School?  @relation(fields: [schoolId], references: [id])
-  schoolId    String?  @db.ObjectId
+  isAvailable  Boolean  @default(true)
+  status       String   @default("pending")
+  rejectReason String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  school       School?  @relation(fields: [schoolId], references: [id])
+  schoolId     String?  @db.ObjectId
 
   averageRating Float @default(0.0)
   totalReviews  Int   @default(0)
@@ -253,12 +263,13 @@ model Service {
   agentId String @db.ObjectId
   agent   Agent  @relation(fields: [agentId], references: [id])
 
-  isAvailable Boolean  @default(true)
-  status      String   @default("pending")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  school      School?  @relation(fields: [schoolId], references: [id])
-  schoolId    String?  @db.ObjectId
+  isAvailable  Boolean  @default(true)
+  status       String   @default("pending")
+  rejectReason String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  school       School?  @relation(fields: [schoolId], references: [id])
+  schoolId     String?  @db.ObjectId
 
   averageRating Float @default(0.0)
   totalReviews  Int   @default(0)
@@ -276,6 +287,14 @@ model Service {
 type UserLocation {
   longitude Float
   latitude  Float
+}
+
+type NotificationSettings {
+  pushEnabled  Boolean @default(true)
+  emailEnabled Boolean @default(true)
+  orders       Boolean @default(true)
+  promotions   Boolean @default(true)
+  security     Boolean @default(true)
 }
 
 type UserProfileImage {
@@ -307,6 +326,8 @@ model User {
   emailOtpExpiry DateTime?
   phoneOtp       String?
   phoneOtpExpiry DateTime?
+  resetOtp       String?
+  resetOtpExpiry DateTime?
   isSuspended    Boolean   @default(false)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -317,8 +338,10 @@ model User {
   school     School @relation(fields: [schoolId], references: [id])
   campusName String
 
-  bio          String?
-  profileImage UserProfileImage?
+  bio                  String?
+  profileImage         UserProfileImage?
+  notificationSettings NotificationSettings?
+  pushTokens           String[]
 
   saveditems SavedItem[]
   reviews    Review[]
@@ -328,8 +351,8 @@ model User {
 
   notificationsEnabled Boolean @default(true)
 
-  @@index([schoolId])
   @@unique([id, email])
+  @@index([schoolId])
   @@map("users")
 }
 
@@ -357,6 +380,8 @@ enum NotificationCat {
   NEW_MESSAGE
   ACCOUNT_VERIFIED
   ITEM_VERIFIED
+  ITEM_REJECTED
+  REPORT_REPLIED
 }
 
 model Notification {
@@ -388,6 +413,13 @@ enum ReportStatus {
   RESOLVED
 }
 
+enum ReportTargetType {
+  AGENT
+  STUDENT
+  ITEM
+  GENERAL
+}
+
 model Report {
   id           String        @id @default(auto()) @map("_id") @db.ObjectId
   subject      String
@@ -395,12 +427,19 @@ model Report {
   reporterId   String        @db.ObjectId
   reporterType RecipientType // STUDENT or AGENT
   status       ReportStatus  @default(OPEN)
-  
-  reply        String?
-  repliedById  String?       @db.ObjectId
-  
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+
+  targetType   ReportTargetType @default(GENERAL)
+  targetId     String?          @db.ObjectId // ID of the Agent, Student, or Item
+  itemCategory String? // "PRODUCT", "PROPERTY", or "SERVICE"
+
+  reply       String?
+  repliedById String? @db.ObjectId
+
+  assignedToId String? @db.ObjectId
+  assignedTo   Admin?  @relation(fields: [assignedToId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("reports")
 }
@@ -419,8 +458,8 @@ model Rating {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  @@index([itemId, itemCategory])
   @@unique([studentId, itemId])
+  @@index([itemId, itemCategory])
   @@map("ratings")
 }
 
@@ -507,4 +546,30 @@ model Message {
 
   @@index([chatId, createdAt])
   @@map("messages")
+}
+
+// =============================================================================
+// GLOBAL — Admin Audit & Settings
+// =============================================================================
+
+model AuditLog {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  adminId   String   @db.ObjectId
+  admin     Admin    @relation(fields: [adminId], references: [id])
+  action    String
+  details   String? // JSON stringified payload of the action
+  createdAt DateTime @default(now())
+
+  @@index([adminId])
+  @@index([action])
+  @@map("audit_logs")
+}
+
+model SystemSetting {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  key       String   @unique
+  value     String // JSON stringified value
+  updatedAt DateTime @updatedAt
+
+  @@map("system_settings")
 }

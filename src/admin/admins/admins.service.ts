@@ -9,6 +9,8 @@ import { UpdateAdminDto } from './dto/update-admin.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { HashtagProvider } from '../../common/auth/providers/hashtag.provider';
 
+import { AdminRole } from '@prisma/client';
+
 @Injectable()
 export class AdminsService {
   constructor(
@@ -51,9 +53,17 @@ export class AdminsService {
     }
   }
 
-  public async getAllAdmins() {
+  public async getAllAdmins(requester?: any) {
+    const whereClause: any = {};
+    if (requester && requester.role === AdminRole.ADMIN) {
+      whereClause.role = {
+        not: AdminRole.SUPER_ADMIN,
+      };
+    }
+
     try {
       return await this.prisma.admin.findMany({
+        where: whereClause,
         select: { id: true, name: true, email: true, role: true, schoolId: true, campusName: true, createdAt: true }
       });
     } catch (err) {

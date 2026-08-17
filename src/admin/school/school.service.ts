@@ -25,4 +25,26 @@ export class SchoolService {
 			},
 		});
 	}
+
+	public async updateSchool(id: string, location: Partial<LocationDto>) {
+		try {
+			return await this.prisma.school.update({
+				where: { id },
+				data: location,
+			});
+		} catch (error: any) {
+			throw new BadRequestException(error.message);
+		}
+	}
+
+	public async deleteSchool(id: string) {
+		const agentCount = await this.prisma.agent.count({ where: { schoolId: id } });
+		const userCount = await this.prisma.user.count({ where: { schoolId: id } });
+
+		if (agentCount > 0 || userCount > 0) {
+			throw new BadRequestException("Cannot delete a school that has registered users.");
+		}
+
+		return await this.prisma.school.delete({ where: { id } });
+	}
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards, Request } from '@nestjs/common';
 import { AdminMetricsService } from './admin-metrics.service';
 import { AdminAuthGuard } from '../auth/guards/admin-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -12,7 +12,11 @@ export class AdminMetricsController {
 
   @Get('dashboard')
   @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.OFFICIAL)
-  async getDashboardMetrics(@Request() req: any) {
-    return this.adminMetricsService.getDashboardMetrics(req.admin);
+  async getDashboardMetrics(
+    @Request() req: any,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.adminMetricsService.getDashboardMetrics(req.admin, startDate, endDate);
   }
 }

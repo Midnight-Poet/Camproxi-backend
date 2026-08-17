@@ -30,6 +30,13 @@ export class AgentProfileController {
     private readonly cloudinaryService: CloudinaryService,
   ) {}
 
+  @Get('school')
+  @UseGuards(AgentAuthGuard)
+  async getSchool(@Req() req: Request) {
+    const agent = req['agent'] as any;
+    return this.agentProfileService.getAgentSchool(agent.id);
+  }
+
   @Post('register')
   async register(
     @Body() createAgentDto: CreateAgentDto,
@@ -147,5 +154,22 @@ export class AgentProfileController {
       throw new BadRequestException('Both oldPassword and newPassword are required');
     }
     return this.agentProfileService.changePassword(agentId, body.oldPassword, body.newPassword);
+  }
+
+  @Post('forgot-password')
+  async forgotPassword(@Body('email') email: string) {
+    if (!email) {
+      throw new BadRequestException('Email is required');
+    }
+    return this.agentProfileService.forgotPassword(email);
+  }
+
+  @Post('reset-password')
+  async resetPassword(@Body() body: any) {
+    const { email, otp, newPassword } = body;
+    if (!email || !otp || !newPassword) {
+      throw new BadRequestException('Email, otp, and newPassword are required');
+    }
+    return this.agentProfileService.resetPassword(email, otp, newPassword);
   }
 }

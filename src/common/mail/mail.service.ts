@@ -43,4 +43,36 @@ export class MailService {
       return false;
     }
   }
+
+  async sendPasswordResetEmail(to: string, otp: string, firstName: string) {
+    try {
+      const { data, error } = await this.resend.emails.send({
+        from: this.defaultFrom,
+        to,
+        subject: 'Camproxi - Password Reset',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #4CAF50;">Hello ${firstName},</h2>
+            <p>You requested a password reset. Please use the following 6-digit code to reset your password:</p>
+            <div style="background-color: #f4f4f4; padding: 15px; text-align: center; border-radius: 5px; margin: 20px 0;">
+              <h1 style="margin: 0; letter-spacing: 5px; color: #333;">${otp}</h1>
+            </div>
+            <p>This code will expire in 10 minutes.</p>
+            <p>If you did not request this, please ignore this email.</p>
+          </div>
+        `,
+      });
+
+      if (error) {
+        this.logger.error(`Failed to send password reset email: ${error.message}`);
+        return false;
+      }
+
+      this.logger.log(`Password reset email sent to ${to}`);
+      return true;
+    } catch (error) {
+      this.logger.error(`Error sending password reset email to ${to}: ${error.message}`);
+      return false;
+    }
+  }
 }

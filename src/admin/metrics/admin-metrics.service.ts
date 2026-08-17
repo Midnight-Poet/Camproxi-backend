@@ -16,8 +16,9 @@ export class AdminMetricsService {
     return {};
   }
 
-  async getDashboardMetrics(admin: any) {
+  async getDashboardMetrics(admin: any, startDate?: string, endDate?: string) {
     const scope = this.getLocationScope(admin);
+    const dateFilter = startDate && endDate ? { createdAt: { gte: new Date(startDate), lte: new Date(endDate) } } : {};
 
     const [
       totalStudents,
@@ -31,20 +32,21 @@ export class AdminMetricsService {
       recentStudents,
       recentAgents,
     ] = await Promise.all([
-      this.prisma.user.count({ where: scope }),
-      this.prisma.agent.count({ where: scope }),
-      this.prisma.agent.count({ where: { ...scope, isverified: true } }),
-      this.prisma.agent.count({ where: { ...scope, isverified: false } }),
-      this.prisma.property.count({ where: { status: 'pending', agent: scope } }),
-      this.prisma.product.count({ where: { status: 'pending', agent: scope } }),
-      this.prisma.service.count({ where: { status: 'pending', agent: scope } }),
+      this.prisma.user.count({ where: { ...scope, ...dateFilter } }),
+      this.prisma.agent.count({ where: { ...scope, ...dateFilter } }),
+      this.prisma.agent.count({ where: { ...scope, isverified: true, ...dateFilter } }),
+      this.prisma.agent.count({ where: { ...scope, isverified: false, ...dateFilter } }),
+      this.prisma.property.count({ where: { status: 'pending', agent: scope, ...dateFilter } }),
+      this.prisma.product.count({ where: { status: 'pending', agent: scope, ...dateFilter } }),
+      this.prisma.service.count({ where: { status: 'pending', agent: scope, ...dateFilter } }),
       
       // For open reports scoped to official, we'd need a more complex query, 
       // but for simplicity, if OFFICIAL, we might just fetch their school reports count.
       // Since report doesn't have schoolId directly, we'll fetch all open for admins.
       admin.role === AdminRole.OFFICIAL 
         ? 0 // Simplified: Officials get 0 or we run a complex query. Let's run a raw query or just fetch open reports if we can.
-        : this.prisma.report.count({ where: { status: ReportStatus.OPEN } }),
+        : this.prisma.report.count({ where: { status: ReportStatus.OPEN, ...dateFilter } }),
+
 
       this.prisma.user.findMany({
         where: scope,
@@ -69,7 +71,7 @@ export class AdminMetricsService {
       ]);
       const allowedIds = [...students.map(s => s.id), ...agents.map(a => a.id)];
       resolvedOpenReports = await this.prisma.report.count({
-        where: { status: ReportStatus.OPEN, reporterId: { in: allowedIds } }
+        where: { status: ReportStatus.OPEN, reporterId: { in: allowedIds }, ...dateFilter }
       });
     }
 
