@@ -39,17 +39,23 @@ export class SearchService {
     let services = [];
 
     if (category === 'ALL' || category === 'PRODUCT') {
-      products = await this.prisma.product.findMany({ where: baseWhere });
+      products = await this.prisma.product.findMany({
+        where: { ...baseWhere, isAvailable: true },
+      });
       products = products.map((p) => ({ ...p, type: 'PRODUCT' }));
     }
 
     if (category === 'ALL' || category === 'PROPERTY') {
-      properties = await this.prisma.property.findMany({ where: baseWhere });
+      properties = await this.prisma.property.findMany({
+        where: { ...baseWhere, isVacant: true },
+      });
       properties = properties.map((p) => ({ ...p, type: 'PROPERTY' }));
     }
 
     if (category === 'ALL' || category === 'SERVICE') {
-      services = await this.prisma.service.findMany({ where: baseWhere });
+      services = await this.prisma.service.findMany({
+        where: { ...baseWhere, isAvailable: true },
+      });
       services = services.map((p) => ({ ...p, type: 'SERVICE' }));
     }
 
@@ -64,7 +70,7 @@ export class SearchService {
           return (b.price || 0) - (a.price || 0);
         }
         if (sortBy === 'rating_desc') {
-          return (b.rating || 0) - (a.rating || 0);
+          return (b.averageRating || 0) - (a.averageRating || 0);
         }
         return 0;
       });

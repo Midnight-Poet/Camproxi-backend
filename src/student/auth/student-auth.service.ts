@@ -51,6 +51,7 @@ export class StudentAuthService {
 					sub: userDetail.id,
 					email: userDetail.email,
 					schoolId: userDetail.schoolId,
+					portal: 'STUDENT',
 				},
 				{
 					secret: this.authConfiguration.secret,
@@ -81,6 +82,7 @@ export class StudentAuthService {
 					sub: res.id,
 					email: res.email,
 					schoolId: res.schoolId,
+					portal: 'STUDENT',
 				},
 				{
 					secret: this.authConfiguration.secret,
@@ -127,10 +129,13 @@ export class StudentAuthService {
 		const user = await this.prisma.user.findFirst({ where: { id: userId } });
 		if (!user) throw new UnauthorizedException('User not found');
 		if (user.emailVerified) return { message: 'Email already verified' };
-		if (user.emailOtp !== otp) throw new UnauthorizedException('Invalid OTP');
+		if (!user.emailOtp) throw new UnauthorizedException('No email OTP was requested');
 		if (user.emailOtpExpiry && user.emailOtpExpiry < new Date()) {
 			throw new UnauthorizedException('OTP has expired');
 		}
+
+		const isMatch = await bcrypt.compare(otp, user.emailOtp);
+		if (!isMatch) throw new UnauthorizedException('Invalid OTP');
 
 		const isNowFullyVerified = user.phoneVerified; // If phone is already verified, this completes it
 
@@ -165,11 +170,12 @@ export class StudentAuthService {
 		if (user.emailVerified) return { message: 'Email already verified' };
 
 		const otp = Math.floor(100000 + Math.random() * 900000).toString();
+		const hashedOtp = await bcrypt.hash(otp, 10);
 		const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
 
 		await this.prisma.user.update({
 			where: { id: user.id },
-			data: { emailOtp: otp, emailOtpExpiry: otpExpiry }
+			data: { emailOtp: hashedOtp, emailOtpExpiry: otpExpiry }
 		});
 
 		this.mailService.sendOtpEmail(user.email, otp, user.firstName).catch(console.error);
@@ -181,10 +187,13 @@ export class StudentAuthService {
 		const user = await this.prisma.user.findFirst({ where: { id: userId } });
 		if (!user) throw new UnauthorizedException('User not found');
 		if (user.phoneVerified) return { message: 'Phone already verified' };
-		if (user.phoneOtp !== otp) throw new UnauthorizedException('Invalid OTP');
+		if (!user.phoneOtp) throw new UnauthorizedException('No phone OTP was requested');
 		if (user.phoneOtpExpiry && user.phoneOtpExpiry < new Date()) {
 			throw new UnauthorizedException('OTP has expired');
 		}
+
+		const isMatch = await bcrypt.compare(otp, user.phoneOtp);
+		if (!isMatch) throw new UnauthorizedException('Invalid OTP');
 
 		const isNowFullyVerified = user.emailVerified; // If email is already verified, this completes it
 
@@ -219,13 +228,13 @@ export class StudentAuthService {
 		if (!user.phone) throw new UnauthorizedException('No phone number attached to account');
 
 		const otp = Math.floor(100000 + Math.random() * 900000).toString();
+		const hashedOtp = await bcrypt.hash(otp, 10);
 		const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
 
 		await this.prisma.user.update({
 			where: { id: user.id },
-			data: { phoneOtp: otp, phoneOtpExpiry: otpExpiry }
+			data: { phoneOtp: hashedOtp, phoneOtpExpiry: otpExpiry }
 		});
-		// const phone
 
 		this.smsService.sendOtpSms(user.phone, otp).catch(console.error);
 

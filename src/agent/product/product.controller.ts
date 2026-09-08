@@ -11,7 +11,6 @@ import {
 	UseInterceptors,
 	UploadedFiles,
 } from '@nestjs/common';
-import { CacheInterceptor } from '@nestjs/cache-manager';
 import { ProductService } from './product.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -66,7 +65,6 @@ export class ProductController {
 	@UseGuards(AgentAuthGuard, RolesGuard)
 	@Roles(Role.VENDOR)
 	@Get()
-	@UseInterceptors(CacheInterceptor)
 	findAllForAgent(@Req() req: Request) {
 		return this.productService.findAllByAgent(req['agent'].id);
 	}
@@ -74,7 +72,6 @@ export class ProductController {
 	@UseGuards(AgentAuthGuard, RolesGuard)
 	@Roles(Role.VENDOR)
 	@Get(':id')
-	@UseInterceptors(CacheInterceptor)
 	findOne(@Param('id') id: string, @Req() req: Request) {
 		return this.productService.findOne(id, req['agent'].id);
 	}
@@ -115,33 +112,19 @@ export class ProductController {
 
 	@UseGuards(StudentAuthGuard)
 	@Get('fetch/students')
-	@UseInterceptors(CacheInterceptor)
 	async getAllByStudents(
 		@Req() req: Request,
 	) {
-		const id = req['user'].schoolId;
-		const res = await this.productService.getAllByStudents();
-		const actualRes = res.filter((element: any) => {
-			if (element.schoolId === id) {
-				return element
-			}
-		});
-		return actualRes
+		const id = req['user']?.schoolId;
+		return this.productService.getAllByStudents(id);
 	}
 
 	@UseGuards(StudentAuthGuard)
 	@Get('fetch/saved')
-	@UseInterceptors(CacheInterceptor)
 	async getSavedByStudents(
 		@Req() req: Request,
 	) {
-		const id = req['user'].schoolId;
-		const res = await this.productService.getAllByStudents();
-		const actualRes = res.filter((element: any) => {
-			if (element.schoolId === id) {
-				return element
-			}
-		});
-		return actualRes
+		const id = req['user']?.schoolId;
+		return this.productService.getAllByStudents(id);
 	}
 }

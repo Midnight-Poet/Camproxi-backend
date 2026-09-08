@@ -10,6 +10,8 @@ import { AgentRequestsModule } from './requests/agent-requests.module';
 import { AgentChatModule } from './chat/agent-chat.module';
 import { AgentReportsModule } from './reports/agent-reports.module';
 import { MetricsModule } from './metrics/metrics.module';
+import { StoreModule } from './store/store.module';
+import { ServiceWorkerModule } from './service-worker/service-worker.module';
 
 @Module({
   imports: [
@@ -24,6 +26,8 @@ import { MetricsModule } from './metrics/metrics.module';
     AgentChatModule,
     AgentReportsModule,
     MetricsModule,
+    StoreModule,
+    ServiceWorkerModule,
   ],
 })
 export class AgentModule {}

@@ -25,6 +25,10 @@ export class AgentAuthGuard implements CanActivate {
 
     try {
       const decoded = this.authService.verifyToken(token);
+      if (decoded.portal && decoded.portal !== 'AGENT') {
+        throw new UnauthorizedException('Invalid token for agent portal');
+      }
+
       const agent = await this.prisma.agent.findUnique({
         where: { id: decoded.agentId },
       });
@@ -40,11 +44,21 @@ export class AgentAuthGuard implements CanActivate {
       request['agent'] = agent;
       return true;
     } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
       throw new UnauthorizedException('Invalid or expired token');
     }
   }
 
   private extractTokenFromCookie(request: Request): string | undefined {
-    return request.cookies?.jwt;
+    if (request.cookies?.jwt) {
+      return request.cookies.jwt;
+    }
+    const authHeader = request.headers['authorization'];
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      return authHeader.split(' ')[1];
+    }
+    return undefined;
   }
 }

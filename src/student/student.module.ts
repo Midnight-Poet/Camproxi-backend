@@ -4,13 +4,14 @@ import { UsersModule } from './users/users.module';
 import { ProfileModule } from './profile/profile.module';
 import { SavedModule } from './saved/saved.module';
 import { ItemsModule } from './items/items.module';
-import { StudentNotificationModule } from './notification/student-notification.module';
 import { StudentReviewsModule } from './reviews/student-reviews.module';
 import { StudentRequestsModule } from './requests/student-requests.module';
 import { StudentChatModule } from './chat/student-chat.module';
 import { StudentReportsModule } from './reports/student-reports.module';
 import { SearchModule } from './search/search.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { StudentStoreModule } from './store/student-store.module';
+import { StudentWorkerModule } from './service-worker/student-worker.module';
 
 @Module({
   imports: [
@@ -19,13 +20,14 @@ import { NotificationsModule } from './notifications/notifications.module';
     ProfileModule,
     SavedModule,
     ItemsModule,
-    StudentNotificationModule,
     StudentReviewsModule,
     StudentRequestsModule,
     StudentChatModule,
     StudentReportsModule,
     SearchModule,
     NotificationsModule,
+    StudentStoreModule,
+    StudentWorkerModule,
   ]
 })
 export class StudentModule {}

@@ -42,7 +42,8 @@ export class AdminAuthService {
           email: userDetail.email, 
           role: userDetail.role,
           schoolId: userDetail.schoolId,
-          campusName: userDetail.campusName 
+          campusName: userDetail.campusName,
+          portal: 'ADMIN',
         },
         {
           secret: this.authConfiguration.secret,
@@ -69,7 +70,8 @@ export class AdminAuthService {
     if (!allUsers || allUsers.length === 0) {
       if (roleOrKey === process.env.ADMIN_PASSWORD) {
         const newUser: any = await this.adminsService.addNewUser(user);
-        return newUser;
+        const { password: _, ...adminWithoutPassword } = newUser;
+        return adminWithoutPassword;
       } else {
         throw new UnauthorizedException(
           'Invalid bootstrap key. You are not authorized to add a new Admin.',
@@ -78,7 +80,8 @@ export class AdminAuthService {
     } else {
       if (roleOrKey === 'SUPER_ADMIN') {
         const newUser: any = await this.adminsService.addNewUser(user);
-        return newUser;
+        const { password: _, ...adminWithoutPassword } = newUser;
+        return adminWithoutPassword;
       } else {
         throw new UnauthorizedException('Unauthorized action: Only SUPER_ADMINs can create admins');
       }

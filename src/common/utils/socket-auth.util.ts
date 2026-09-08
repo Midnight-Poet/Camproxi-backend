@@ -18,55 +18,56 @@ export async function authenticateSocket(
   jwtService: JwtService,
 ): Promise<SocketAuthResult | null> {
   const authCookie = client.handshake.headers.cookie;
-  if (!authCookie) return null;
+  const cookies: Record<string, string> = authCookie
+    ? authCookie.split(';').reduce((acc, cookieStr) => {
+        const [key, value] = cookieStr.trim().split('=');
+        if (key && value) acc[key] = value;
+        return acc;
+      }, {} as Record<string, string>)
+    : {};
 
-  const cookies = authCookie.split(';').reduce((acc, cookieStr) => {
-    const [key, value] = cookieStr.trim().split('=');
-    acc[key] = value;
-    return acc;
-  }, {} as Record<string, string>);
+  const tokenFromAuth =
+    (client.handshake.auth && (client.handshake.auth.token || client.handshake.auth.access_token)) ||
+    (client.handshake.headers['authorization']?.startsWith('Bearer ')
+      ? client.handshake.headers['authorization'].split(' ')[1]
+      : undefined);
 
-  const origin = client.handshake.headers.origin || client.handshake.headers.referer || '';
-  const agentUrl = process.env.AGENT_URL || 'http://localhost:5173';
-  console.log(`[WebSocket] Auth Handshake - Origin: ${client.handshake.headers.origin}, Referer: ${client.handshake.headers.referer}`);
+  const agentSecret =
+    process.env.AGENT_JWT_TOKEN || process.env.JWT_TOKEN_SECRET || 'camproxi-agent-secret-key';
 
   try {
-    // If the connection comes from the Agent portal, prioritize the Agent's 'jwt' cookie
-    if (origin === agentUrl || origin.includes('5173')) {
-      if (cookies['jwt']) {
-        const decoded = jwt.verify(
-          cookies['jwt'],
-          process.env.AGENT_JWT_TOKEN as string,
-        ) as any;
-        const userId = decoded.agentId;
-        if (!userId) return null;
-        return { userId, role: RecipientType.AGENT };
+    // 1. Check for Agent's 'jwt' cookie or auth token
+    const agentToken = cookies['jwt'] || (client.handshake.auth?.role === 'AGENT' ? tokenFromAuth : undefined);
+    if (agentToken) {
+      try {
+        const decoded = jwt.verify(agentToken, agentSecret) as any;
+        const userId = decoded.agentId || decoded.sub;
+        if (userId) {
+          return { userId, role: RecipientType.AGENT };
+        }
+      } catch {
+        // Fall through to try standard access_token
       }
     }
 
-    // Otherwise, check for the 'access_token' (used by Student and Admin)
-    if (cookies['access_token']) {
-      const decoded = await jwtService.verifyAsync(cookies['access_token']);
+    // 2. Check for 'access_token' (used by Student and Admin) or handshake token
+    const accessToken = cookies['access_token'] || tokenFromAuth;
+    if (accessToken) {
+      const decoded = await jwtService.verifyAsync(accessToken);
       const userId = decoded.sub;
-      const role = decoded.role ? RecipientType.ADMIN : RecipientType.STUDENT;
       if (!userId) return null;
-      return { userId, role };
-    }
 
-    // Fallback if the agent is connecting but didn't match the exact origin string above
-    if (cookies['jwt']) {
-      const decoded = jwt.verify(
-        cookies['jwt'],
-        process.env.AGENT_JWT_TOKEN as string,
-      ) as any;
-      const userId = decoded.agentId;
-      if (!userId) return null;
-      return { userId, role: RecipientType.AGENT };
+      if (decoded.portal === 'ADMIN' || decoded.role) {
+        return { userId, role: RecipientType.ADMIN };
+      }
+      if (decoded.portal === 'AGENT' || decoded.agentId) {
+        return { userId, role: RecipientType.AGENT };
+      }
+      return { userId, role: RecipientType.STUDENT };
     }
 
     return null;
   } catch {
-    // invalid/expired token, malformed cookie, etc.
     return null;
   }
 }

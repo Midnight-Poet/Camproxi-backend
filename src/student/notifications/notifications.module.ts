@@ -7,12 +7,9 @@ import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 
 @Module({
-  providers: [NotificationsService],
+  imports: [StudentAuthModule],
   controllers: [NotificationsController],
-  imports: [
-    StudentAuthModule,
-    ConfigModule.forFeature(authConfig),
-    JwtModule.registerAsync(authConfig.asProvider()),
-  ],
+  providers: [NotificationsService],
+  exports: [NotificationsService],
 })
 export class NotificationsModule {}

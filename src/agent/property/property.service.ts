@@ -156,10 +156,14 @@ export class PropertyService {
     return { message: 'Property and associated images deleted successfully' };
   }
 
-  async getAllByStudents() {
-		const properties = await this.prisma.property.findMany({
+  async getAllByStudents(schoolId?: string) {
+		const whereClause: any = { isVacant: true };
+		if (schoolId) {
+			whereClause.schoolId = schoolId;
+		}
+		return this.prisma.property.findMany({
+			where: whereClause,
 			orderBy: { createdAt: 'desc' },
 		});
-		return properties;
 	}
 }

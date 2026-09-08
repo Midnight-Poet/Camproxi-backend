@@ -1,21 +1,12 @@
 import { Module } from '@nestjs/common';
 import { SavedService } from './saved.service';
 import { SavedController } from './saved.controller';
-import { HashtagProvider } from 'src/common/auth/providers/hashtag.provider';
-import { BcryptProvider } from 'src/common/auth/providers/bcrypt.provider';
-import { ConfigModule } from '@nestjs/config';
-import { JwtModule } from '@nestjs/jwt';
-import authConfig from 'src/common/auth/config/auth.config';
+import { StudentAuthModule } from '../auth/student-auth.module';
 
 @Module({
-	providers: [
-		SavedService,
-		{ provide: HashtagProvider, useClass: BcryptProvider },
-	],
-	imports: [
-		ConfigModule.forFeature(authConfig),
-		JwtModule.registerAsync(authConfig.asProvider()),
-	],
+	imports: [StudentAuthModule],
 	controllers: [SavedController],
+	providers: [SavedService],
+	exports: [SavedService],
 })
 export class SavedModule {}

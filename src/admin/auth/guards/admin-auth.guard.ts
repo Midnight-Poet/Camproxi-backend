@@ -30,9 +30,17 @@ export class AdminAuthGuard implements CanActivate {
         token,
         this.authConfiguration,
       );
+
+      if (payload.portal !== 'ADMIN' || !payload.role) {
+        throw new UnauthorizedException('Invalid token for admin portal');
+      }
+
       req['admin'] = payload;
     } catch (err) {
-      throw new UnauthorizedException();
+      if (err instanceof UnauthorizedException) {
+        throw err;
+      }
+      throw new UnauthorizedException('Invalid or expired admin token');
     }
 
     return true;
@@ -41,6 +49,10 @@ export class AdminAuthGuard implements CanActivate {
   private extractTokenFromCookie(request: Request): any | undefined {
     if (request.cookies && 'access_token' in request.cookies) {
       return request.cookies.access_token;
+    }
+    const authHeader = request.headers['authorization'];
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      return authHeader.split(' ')[1];
     }
     return undefined;
   }

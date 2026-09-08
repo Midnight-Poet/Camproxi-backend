@@ -33,6 +33,10 @@ export class StudentAuthGuard implements CanActivate {
         this.authConfiguration,
       );
 
+      if (payload.portal && payload.portal !== 'STUDENT') {
+        throw new UnauthorizedException('Invalid token for student portal');
+      }
+
       const user = await this.prisma.user.findUnique({
         where: { id: payload.sub },
       });
@@ -59,6 +63,10 @@ export class StudentAuthGuard implements CanActivate {
   private extractTokenFromCookie(request: Request): any | undefined {
     if (request.cookies && 'access_token' in request.cookies) {
       return request.cookies.access_token;
+    }
+    const authHeader = request.headers['authorization'];
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      return authHeader.split(' ')[1];
     }
     return undefined;
   }

@@ -137,6 +137,9 @@ model Agent {
   services   Service[]
   chats      Chat[]
 
+  stores         Store[]
+  serviceWorkers ServiceWorker[]
+
   @@index([schoolId])
   @@map("agents")
 }
@@ -144,6 +147,52 @@ model Agent {
 type Location {
   lat Float
   lng Float
+}
+
+type PriceRange {
+  min Float
+  max Float
+}
+
+type OperatingHours {
+  open  String // e.g. "09:00"
+  close String // e.g. "17:00"
+}
+
+model Store {
+  id             String          @id @default(auto()) @map("_id") @db.ObjectId
+  agentId        String          @db.ObjectId
+  agent          Agent           @relation(fields: [agentId], references: [id])
+  
+  name           String
+  description    String?
+  bannerImage    String?
+  address        String?
+  location       Location?
+  operatingHours OperatingHours?
+
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  
+  @@map("stores")
+}
+
+model ServiceWorker {
+  id             String       @id @default(auto()) @map("_id") @db.ObjectId
+  agentId        String       @db.ObjectId
+  agent          Agent        @relation(fields: [agentId], references: [id])
+  
+  name           String
+  kindOfService  String
+  profileImage   String?
+  phone          String?
+  whatsapp       String?
+  socialLinks    SocialLinks?
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  
+  @@map("service_workers")
 }
 
 type PropertyImage {

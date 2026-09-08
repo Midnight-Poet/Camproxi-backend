@@ -1,12 +1,10 @@
-import { Controller, Get, Param, Req, UseGuards, UseInterceptors } from '@nestjs/common';
-import { CacheInterceptor } from '@nestjs/cache-manager';
+import { Controller, Get, Param, Req, UseGuards } from '@nestjs/common';
 import { ItemsService } from './items.service';
 import { StudentAuthGuard } from '../auth/guards/student-auth.guard';
 import { Request } from 'express';
 
 @Controller('api/student/items')
 @UseGuards(StudentAuthGuard)
-@UseInterceptors(CacheInterceptor)
 export class ItemsController {
   constructor(private readonly itemsService: ItemsService) {}
 

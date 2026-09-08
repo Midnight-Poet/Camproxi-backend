@@ -6,8 +6,8 @@ export class ItemsService {
 	constructor(private readonly prisma: PrismaService) {}
 
 	async getProducts(schoolId: string) {
-		return this.prisma.product.findMany({
-			where: { schoolId },
+		return await this.prisma.product.findMany({
+			where: { schoolId, isAvailable: true },
 			orderBy: { createdAt: 'desc' },
 		});
 	}
@@ -50,15 +50,10 @@ export class ItemsService {
 	}
 
 	async getProperties(schoolId: string) {
-		try {
-			const properties = await this.prisma.property.findMany({
-				where: { schoolId },
-				orderBy: { createdAt: 'desc' },
-			});
-			return properties;
-		} catch (error) {
-			console.log(error);
-		}
+		return this.prisma.property.findMany({
+			where: { schoolId, isVacant: true },
+			orderBy: { createdAt: 'desc' },
+		});
 	}
 
 	async getPropertyById(id: string, schoolId: string) {
@@ -100,7 +95,7 @@ export class ItemsService {
 
 	async getServices(schoolId: string) {
 		return this.prisma.service.findMany({
-			where: { schoolId },
+			where: { schoolId, isAvailable: true },
 			orderBy: { createdAt: 'desc' },
 		});
 	}

@@ -161,8 +161,12 @@ export class ServiceService {
     return { message: 'Service and associated images deleted successfully' };
   }
 
-  async getAllByStudents() {
+  async getAllByStudents(schoolId: string) {
 		const services = await this.prisma.service.findMany({
+			where: {
+				schoolId,
+				isAvailable: true,
+			},
 			orderBy: { createdAt: 'desc' },
 		});
 		return services;

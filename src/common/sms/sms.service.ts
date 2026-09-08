@@ -19,13 +19,12 @@ export class SmsService {
     try {
       const data = {
         to,
-        from: 'Generic',
+        from: senderId || 'Generic',
         sms: `Your Camproxi verification code is: ${otp}. It will expire in 10 minutes.`,
         type: 'plain',
         channel: 'generic',
         api_key: apiKey,
       };
-      console.log(data)
 
       const response = await axios.post(url, data);
       return response.data;

@@ -155,10 +155,14 @@ export class ProductService {
 		};
 	}
 
-	async getAllByStudents() {
-		const products = await this.prisma.product.findMany({
+	async getAllByStudents(schoolId?: string) {
+		const whereClause: any = { isAvailable: true };
+		if (schoolId) {
+			whereClause.schoolId = schoolId;
+		}
+		return this.prisma.product.findMany({
+			where: whereClause,
 			orderBy: { createdAt: 'desc' },
 		});
-		return products;
 	}
 }

@@ -20,16 +20,19 @@ export class AdminsController {
   }
 
   @Get('me')
+  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.OFFICIAL)
   async getProfile(@Request() req: any) {
     return this.adminsService.getProfile(req.admin.sub);
   }
 
   @Patch('update')
+  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.OFFICIAL)
   async updateProfile(@Request() req: any, @Body() data: UpdateAdminDto) {
     return this.adminsService.updateProfile(req.admin.sub, data);
   }
 
   @Patch('change-password')
+  @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.OFFICIAL)
   async changePassword(@Request() req: any, @Body() data: ChangePasswordDto) {
     return this.adminsService.changePassword(req.admin.sub, data);
   }

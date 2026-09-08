@@ -1,5 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards, UseInterceptors } from '@nestjs/common';
-import { CacheInterceptor } from '@nestjs/cache-manager';
+import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ChatService } from 'src/common/chat/chat.service';
 import { AgentAuthGuard } from '../auth/agent-auth.guard';
 
@@ -9,15 +8,13 @@ export class AgentChatController {
   constructor(private readonly chatService: ChatService) {}
 
   @Get()
-  @UseInterceptors(CacheInterceptor)
   async getMyChats(@Req() req: any) {
     return this.chatService.getAgentChats(req.agent.id);
   }
 
   @Get(':chatId')
-  @UseInterceptors(CacheInterceptor)
-  async getChatById(@Param('chatId') chatId: string) {
-    return this.chatService.getChatById(chatId);
+  async getChatById(@Req() req: any, @Param('chatId') chatId: string) {
+    return this.chatService.getChatById(chatId, req.agent.id);
   }
 
   @Post('initiate')
@@ -34,14 +31,15 @@ export class AgentChatController {
   }
 
   @Get(':chatId/messages')
-  @UseInterceptors(CacheInterceptor)
   async getMessages(
+    @Req() req: any,
     @Param('chatId') chatId: string,
     @Query('limit') limit: string,
     @Query('skip') skip: string,
   ) {
     return this.chatService.getChatMessages(
       chatId, 
+      req.agent.id,
       limit ? parseInt(limit, 10) : 50, 
       skip ? parseInt(skip, 10) : 0
     );

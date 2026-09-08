@@ -32,30 +32,32 @@ export class MetricsService {
     ];
 
     // Count Requests related to agent's items
-    const requests = await this.prisma.request.findMany({
-      where: { itemId: { in: itemIds } },
-      select: { status: true },
-    });
+    const [pendingRequests, approvedRequests, rejectedRequests, totalRequests, totalReviews, ratingAggregate] =
+      itemIds.length > 0
+        ? await Promise.all([
+            this.prisma.request.count({
+              where: { itemId: { in: itemIds }, status: 'PENDING' },
+            }),
+            this.prisma.request.count({
+              where: { itemId: { in: itemIds }, status: 'APPROVED' },
+            }),
+            this.prisma.request.count({
+              where: { itemId: { in: itemIds }, status: 'REJECTED' },
+            }),
+            this.prisma.request.count({
+              where: { itemId: { in: itemIds } },
+            }),
+            this.prisma.review.count({
+              where: { itemId: { in: itemIds } },
+            }),
+            this.prisma.rating.aggregate({
+              where: { itemId: { in: itemIds } },
+              _avg: { rating: true },
+            }),
+          ])
+        : [0, 0, 0, 0, 0, { _avg: { rating: 0 } }];
 
-    const pendingRequests = requests.filter((r) => r.status === 'PENDING').length;
-    const approvedRequests = requests.filter((r) => r.status === 'APPROVED').length;
-    const rejectedRequests = requests.filter((r) => r.status === 'REJECTED').length;
-
-    // Calculate Reviews and Average Rating
-    const reviews = await this.prisma.review.findMany({
-      where: { itemId: { in: itemIds } },
-      select: { id: true },
-    });
-    const totalReviews = reviews.length;
-
-    const ratings = await this.prisma.rating.findMany({
-      where: { itemId: { in: itemIds } },
-      select: { rating: true },
-    });
-    const totalRatings = ratings.length;
-    const averageRating = totalRatings > 0
-      ? ratings.reduce((sum, r) => sum + r.rating, 0) / totalRatings
-      : 0;
+    const averageRating = ratingAggregate._avg?.rating || 0;
 
     return {
       success: true,
@@ -70,7 +72,7 @@ export class MetricsService {
           pending: pendingRequests,
           approved: approvedRequests,
           rejected: rejectedRequests,
-          total: requests.length,
+          total: totalRequests,
         },
         reviews: {
           total: totalReviews,

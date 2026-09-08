@@ -11,11 +11,11 @@ import {
 	UseInterceptors,
 	UploadedFiles,
 } from '@nestjs/common';
-import { CacheInterceptor } from '@nestjs/cache-manager';
 import { PropertyService } from './property.service';
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
 import { AgentAuthGuard } from '../auth/agent-auth.guard';
+import { StudentAuthGuard } from '../../student/auth/guards/student-auth.guard';
 import { Request } from 'express';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { CloudinaryService } from '../../common/cloudinary/cloudinary.service';
@@ -63,7 +63,6 @@ export class PropertyController {
 	@UseGuards(AgentAuthGuard, RolesGuard)
 	@Roles(Role.AGENT)
 	@Get()
-	@UseInterceptors(CacheInterceptor)
 	findAllForAgent(@Req() req: Request) {
 		return this.propertyService.findAllByAgent(req['agent'].id);
 	}
@@ -71,7 +70,6 @@ export class PropertyController {
 	@UseGuards(AgentAuthGuard, RolesGuard)
 	@Roles(Role.AGENT)
 	@Get(':id')
-	@UseInterceptors(CacheInterceptor)
 	findOne(@Param('id') id: string, @Req() req: Request) {
 		return this.propertyService.findOne(id, req['agent'].id);
 	}
@@ -109,18 +107,12 @@ export class PropertyController {
 		return this.propertyService.remove(id, req['agent'].id);
 	}
 
+	@UseGuards(StudentAuthGuard)
 	@Get('fetch/students/:schoolId')
-	@UseInterceptors(CacheInterceptor)
 	async getAllByStudents(
 		@Req() req: Request,
 	) {
-		const id = req['user'].schoolId;
-		const res = await this.propertyService.getAllByStudents();
-		const actualRes = res.filter((element: any) => {
-			if (element.schoolId === id) {
-				return element
-			}
-		});
-		return actualRes
+		const id = req['user']?.schoolId;
+		return this.propertyService.getAllByStudents(id);
 	}
 }

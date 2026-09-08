@@ -43,10 +43,11 @@ export class GlobalExceptionFilter implements ExceptionFilter {
           message = `Prisma error: ${exception.code}`;
       }
     } else if (exception instanceof Error) {
-      message = exception.message;
       this.logger.error(`[Unhandled Error] ${exception.message}`, exception.stack);
+      message = process.env.NODE_ENV === 'production' ? 'Internal server error' : exception.message;
     } else {
       this.logger.error(`[Unknown Error]`, exception);
+      message = 'Internal server error';
     }
 
     const responseBody = {

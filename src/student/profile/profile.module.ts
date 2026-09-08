@@ -8,13 +8,12 @@ import { JwtModule } from '@nestjs/jwt';
 import { CloudinaryModule } from '../../common/cloudinary/cloudinary.module';
 
 @Module({
-  providers: [ProfileService],
-  controllers: [ProfileController],
   imports: [
     StudentAuthModule,
-    ConfigModule.forFeature(authConfig),
-    JwtModule.registerAsync(authConfig.asProvider()),
     CloudinaryModule,
   ],
+  controllers: [ProfileController],
+  providers: [ProfileService],
+  exports: [ProfileService],
 })
 export class ProfileModule {}

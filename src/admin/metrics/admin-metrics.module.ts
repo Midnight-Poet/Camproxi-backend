@@ -1,16 +1,11 @@
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
-import authConfig from 'src/common/auth/config/auth.config';
-import { ConfigModule } from '@nestjs/config';
+import { AdminAuthModule } from '../auth/admin-auth.module';
 import { AdminMetricsService } from './admin-metrics.service';
 import { AdminMetricsController } from './admin-metrics.controller';
 
 @Module({
+  imports: [AdminAuthModule],
   controllers: [AdminMetricsController],
   providers: [AdminMetricsService],
-  imports: [
-    JwtModule.registerAsync(authConfig.asProvider()),
-    ConfigModule.forFeature(authConfig),
-  ],
 })
 export class AdminMetricsModule {}

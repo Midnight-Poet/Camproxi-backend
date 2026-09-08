@@ -99,10 +99,13 @@ export class AgentProfileService {
 		const agent = await this.prisma.agent.findUnique({ where: { id: agentId } });
 		if (!agent) throw new NotFoundException('Agent not found');
 		if (agent.emailVerified) return { message: 'Email already verified' };
-		if (agent.emailOtp !== otp) throw new UnauthorizedException('Invalid OTP');
+		if (!agent.emailOtp) throw new UnauthorizedException('No email OTP was requested');
 		if (agent.emailOtpExpiry && agent.emailOtpExpiry < new Date()) {
 			throw new UnauthorizedException('OTP has expired');
 		}
+
+		const isMatch = await bcrypt.compare(otp, agent.emailOtp);
+		if (!isMatch) throw new UnauthorizedException('Invalid OTP');
 
 		const isNowFullyVerified = agent.phoneVerified;
 
@@ -136,11 +139,12 @@ export class AgentProfileService {
 		if (agent.emailVerified) return { message: 'Email already verified' };
 
 		const otp = Math.floor(100000 + Math.random() * 900000).toString();
+		const hashedOtp = await bcrypt.hash(otp, 10);
 		const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
 
 		await this.prisma.agent.update({
 			where: { id: agent.id },
-			data: { emailOtp: otp, emailOtpExpiry: otpExpiry },
+			data: { emailOtp: hashedOtp, emailOtpExpiry: otpExpiry },
 		});
 
 		this.mailService.sendOtpEmail(agent.email, otp, agent.firstName).catch(console.error);
@@ -152,10 +156,13 @@ export class AgentProfileService {
 		const agent = await this.prisma.agent.findUnique({ where: { id: agentId } });
 		if (!agent) throw new NotFoundException('Agent not found');
 		if (agent.phoneVerified) return { message: 'Phone already verified' };
-		if (agent.phoneOtp !== otp) throw new UnauthorizedException('Invalid OTP');
+		if (!agent.phoneOtp) throw new UnauthorizedException('No phone OTP was requested');
 		if (agent.phoneOtpExpiry && agent.phoneOtpExpiry < new Date()) {
 			throw new UnauthorizedException('OTP has expired');
 		}
+
+		const isMatch = await bcrypt.compare(otp, agent.phoneOtp);
+		if (!isMatch) throw new UnauthorizedException('Invalid OTP');
 
 		const isNowFullyVerified = agent.emailVerified;
 
@@ -190,11 +197,12 @@ export class AgentProfileService {
 		if (!agent.phone) throw new UnauthorizedException('No phone number attached to account');
 
 		const otp = Math.floor(100000 + Math.random() * 900000).toString();
+		const hashedOtp = await bcrypt.hash(otp, 10);
 		const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
 
 		await this.prisma.agent.update({
 			where: { id: agent.id },
-			data: { phoneOtp: otp, phoneOtpExpiry: otpExpiry },
+			data: { phoneOtp: hashedOtp, phoneOtpExpiry: otpExpiry },
 		});
 
 		this.smsService.sendOtpSms(agent.phone, otp).catch(console.error);
@@ -209,8 +217,17 @@ export class AgentProfileService {
 		if (!agent) {
 			throw new NotFoundException('Agent not found');
 		}
-		const { password: _, ...agentWithoutPassword } = agent;
-		return agentWithoutPassword;
+		const {
+			password: _,
+			emailOtp: _1,
+			phoneOtp: _2,
+			resetOtp: _3,
+			emailOtpExpiry: _4,
+			phoneOtpExpiry: _5,
+			resetOtpExpiry: _6,
+			...agentSafe
+		} = agent;
+		return agentSafe;
 	}
 
 	async getStudentProfile(studentId: string) {

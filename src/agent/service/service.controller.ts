@@ -15,6 +15,7 @@ import { ServiceService } from './service.service';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
 import { AgentAuthGuard } from '../auth/agent-auth.guard';
+import { StudentAuthGuard } from '../../student/auth/guards/student-auth.guard';
 import { Request } from 'express';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { CloudinaryService } from '../../common/cloudinary/cloudinary.service';
@@ -107,16 +108,12 @@ export class ServiceController {
 	}
 
 	@Get('fetch/students/:schoolId')
+	@UseGuards(StudentAuthGuard)
 	async getAllByStudents(
 		@Req() req: Request,
+		@Param('schoolId') schoolIdParam: string,
 	) {
-		const id = req['user'].schoolId;
-		const res = await this.serviceService.getAllByStudents();
-		const actualRes = res.filter((element: any) => {
-			if (element.schoolId === id) {
-				return element
-			}
-		});
-		return actualRes
+		const schoolId = req['user']?.schoolId || schoolIdParam;
+		return this.serviceService.getAllByStudents(schoolId);
 	}
 }

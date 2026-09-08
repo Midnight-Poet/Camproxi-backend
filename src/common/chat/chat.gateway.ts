@@ -114,7 +114,30 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		@MessageBody() payload: SendMessageDto,
 	) {
 		try {
-			const message = await this.chatService.saveMessage(payload);
+			const userId = this.socketToUser.get(client.id);
+			if (!userId) return;
+
+			// Verify the user is a participant of this chat
+			const chat = await this.prisma.chat.findUnique({
+				where: { id: payload.chatId },
+			});
+
+			if (!chat) return;
+
+			if (chat.studentId !== userId && chat.agentId !== userId) {
+				console.warn(`[SECURITY] User ${userId} attempted to send message to unauthorized chat ${payload.chatId}`);
+				return;
+			}
+
+			// Ensure authenticated user is the sender
+			const sanitizedPayload: SendMessageDto = {
+				chatId: payload.chatId,
+				content: payload.content,
+				senderId: userId,
+				senderType: chat.studentId === userId ? 'STUDENT' : 'AGENT',
+			};
+
+			const message = await this.chatService.saveMessage(sanitizedPayload);
 
 			// Broadcast the message to all users in the chat room (all their
 			// connected tabs/devices are already in the room via joinChat).

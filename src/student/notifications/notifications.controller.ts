@@ -4,11 +4,13 @@ import {
   Patch,
   Post,
   Delete,
+  Param,
   Body,
   UseGuards,
   Req,
 } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
+import { NotificationService } from 'src/common/notification/notification.service';
 import { StudentAuthGuard } from '../auth/guards/student-auth.guard';
 import { UpdateSettingsDto } from './dto/update-settings.dto';
 import { PushTokenDto } from './dto/push-token.dto';
@@ -17,7 +19,30 @@ import { Request } from 'express';
 @Controller('api/student/notifications')
 @UseGuards(StudentAuthGuard)
 export class NotificationsController {
-  constructor(private readonly notificationsService: NotificationsService) {}
+  constructor(
+    private readonly notificationsService: NotificationsService,
+    private readonly commonNotificationService: NotificationService,
+  ) {}
+
+  @Get()
+  async getNotifications(@Req() req: Request) {
+    const studentId = req['user']?.sub;
+    return this.commonNotificationService.getUserNotifications(studentId, 'STUDENT');
+  }
+
+  @Patch(':id/read')
+  async markAsRead(@Param('id') id: string, @Req() req: Request) {
+    const studentId = req['user']?.sub;
+    await this.commonNotificationService.markAsRead(id, studentId);
+    return { message: 'Notification marked as read' };
+  }
+
+  @Patch('read-all')
+  async markAllAsRead(@Req() req: Request) {
+    const studentId = req['user']?.sub;
+    await this.commonNotificationService.markAllAsRead(studentId, 'STUDENT');
+    return { message: 'All notifications marked as read' };
+  }
 
   @Get('settings')
   async getSettings(@Req() req: Request) {

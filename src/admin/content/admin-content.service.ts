@@ -26,17 +26,17 @@ export class AdminContentService {
     
     const [properties, products, services] = await Promise.all([
       paginate(this.prisma.property, {
-        where: { status: 'pending', agent: scope },
+        where: { status: 'pending', ...scope },
         include: { agent: { select: { id: true, firstName: true, lastName: true, companyName: true, phone: true } } },
         orderBy: { createdAt: 'desc' },
       }, page, limit),
       paginate(this.prisma.product, {
-        where: { status: 'pending', agent: scope },
+        where: { status: 'pending', ...scope },
         include: { agent: { select: { id: true, firstName: true, lastName: true, companyName: true, phone: true } } },
         orderBy: { createdAt: 'desc' },
       }, page, limit),
       paginate(this.prisma.service, {
-        where: { status: 'pending', agent: scope },
+        where: { status: 'pending', ...scope },
         include: { agent: { select: { id: true, firstName: true, lastName: true, companyName: true, phone: true } } },
         orderBy: { createdAt: 'desc' },
       }, page, limit),

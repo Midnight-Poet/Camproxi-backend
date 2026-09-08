@@ -17,11 +17,47 @@ export class UsersService {
   ) {}
 
   public async getAllUsers(page: number = 1, limit: number = 20) {
-    return paginate(this.prisma.user, {}, page, limit);
+    return paginate(
+      this.prisma.user,
+      {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          username: true,
+          profileImage: true,
+          campusName: true,
+          isverified: true,
+          schoolId: true,
+          createdAt: true,
+        },
+      },
+      page,
+      limit,
+    );
   }
 
   public async getUserById(id: string) {
-    const user = await this.prisma.user.findFirst({ where: { id } });
+    const user = await this.prisma.user.findFirst({
+      where: { id },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        username: true,
+        email: true,
+        phone: true,
+        bio: true,
+        profileImage: true,
+        campusName: true,
+        isverified: true,
+        schoolId: true,
+        createdAt: true,
+        school: {
+          select: { id: true, name: true, code: true, campus: true },
+        },
+      },
+    });
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -99,6 +135,7 @@ export class UsersService {
             : undefined,
       },
     });
-    return newUser;
+    const { password: _, ...userWithoutPassword } = newUser;
+    return userWithoutPassword;
   }
 }

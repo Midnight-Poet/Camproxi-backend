@@ -1,5 +1,6 @@
 import {
 	BadRequestException,
+	ForbiddenException,
 	Injectable,
 	NotFoundException,
 } from '@nestjs/common';
@@ -54,7 +55,7 @@ export class ChatService {
 		return chat;
 	}
 
-	async getChatById(chatId: string) {
+	async getChatById(chatId: string, userId?: string) {
 		const chat = await this.prisma.chat.findUnique({
 			where: { id: chatId },
 			include: {
@@ -78,6 +79,9 @@ export class ChatService {
 			},
 		});
 		if (!chat) throw new NotFoundException('Chat not found');
+		if (userId && chat.studentId !== userId && chat.agentId !== userId) {
+			throw new ForbiddenException('You are not authorized to view this chat');
+		}
 		return chat;
 	}
 
@@ -129,7 +133,14 @@ export class ChatService {
 		});
 	}
 
-	async getChatMessages(chatId: string, limit = 50, skip = 0) {
+	async getChatMessages(chatId: string, userId?: string, limit = 50, skip = 0) {
+		if (userId) {
+			const chat = await this.prisma.chat.findUnique({ where: { id: chatId } });
+			if (!chat) throw new NotFoundException('Chat not found');
+			if (chat.studentId !== userId && chat.agentId !== userId) {
+				throw new ForbiddenException('You are not authorized to view messages in this chat');
+			}
+		}
 		return this.prisma.message.findMany({
 			where: { chatId },
 			orderBy: { createdAt: 'desc' },

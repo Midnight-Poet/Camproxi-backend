@@ -28,6 +28,13 @@ export class SavedService {
 			throw new BadRequestException('Item not found or does not belong to your school');
 		}
 
+		const existing = await this.prisma.savedItem.findFirst({
+			where: { itemId, userId },
+		});
+		if (existing) {
+			return existing;
+		}
+
 		const item = await this.prisma.savedItem.create({
 			data: { itemId: itemId, itemCategory, userId },
 		});
